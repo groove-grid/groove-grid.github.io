@@ -9,7 +9,14 @@ import type {
   Wakeup,
 } from '../core/ports.ts'
 import { DEFAULT_SETTINGS, type Settings } from '../core/settings.ts'
-import { startTimeline, type ClickLevel, type Live, type Timeline } from '../core/timeline.ts'
+import {
+  changedMetricKeys,
+  startTimeline,
+  withSettings,
+  type ClickLevel,
+  type Live,
+  type Timeline,
+} from '../core/timeline.ts'
 import { clickSampleId } from './sample-bank.ts'
 
 export interface SchedulerDeps {
@@ -51,6 +58,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   let status: EngineStatus = 'stopped'
   let settings: Settings = DEFAULT_SETTINGS
   let state: PlanState | null = null
+  let pending: Pending | null = null
   let skipped = 0
   let starting = false
   /** Bumped by `stop` so a `start` still waiting on audio can tell it was cancelled. */
@@ -61,11 +69,26 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     for (const listener of listeners) listener()
   }
 
+  /** Recomputes `pending` from the timeline at audio time `t`; notifies when it changes. */
+  function refreshPending(t: number): void {
+    const before = pending
+    pending = null
+    const segments = state?.timeline.segments ?? []
+    const last = segments[segments.length - 1]
+    if (state && last && segments.length > 1 && last.startTime > t) {
+      const playing = segments.findLast((s) => s.startTime <= t) ?? segments[0]!
+      const changed = changedMetricKeys(playing.metric, last.metric)
+      if (changed.length > 0) pending = { changed, settings, atTime: last.startTime }
+    }
+    if (before || pending) for (const listener of listeners) listener()
+  }
+
   function onWake(): void {
     if (!state) return
     const current = now()
     const planned = plan(state, current)
     state = planned.state
+    if (pending && current >= pending.atTime) refreshPending(current)
     for (const event of planned.events) {
       if (event.kind !== 'click') continue
       if (event.time < current) {
@@ -86,6 +109,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     wakeup.stop()
     out.cancelAll()
     state = null
+    pending = null
   }
 
   function pause(reason: PausedReason): void {
@@ -124,7 +148,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       return status
     },
     get pending(): Pending | null {
-      return null
+      return pending
     },
     get skipped() {
       return skipped
@@ -138,6 +162,18 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     },
     apply(next) {
       settings = next
+      if (!state) return
+      state = {
+        ...state,
+        timeline: withSettings(state.timeline, next, state.committedUntil),
+        live: {
+          grid: next.grid,
+          markers: next.markers,
+          markerSound: next.markerSound,
+          muted: next.muted,
+        },
+      }
+      refreshPending(now())
     },
     async start(next) {
       if (status === 'playing' || starting) return

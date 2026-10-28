@@ -47,17 +47,7 @@ export function tickTime(segment: Segment, tick: number): number {
 }
 
 export function startTimeline(settings: Settings, startTime: number): Timeline {
-  const { bpm, beats, beatUnit, clickBeats, betweenBeats, clickSound } = settings
-  return {
-    segments: [
-      {
-        startTick: 0,
-        startTime,
-        barOriginTick: 0,
-        metric: { bpm, beats, beatUnit, clickBeats: [...clickBeats], betweenBeats, clickSound },
-      },
-    ],
-  }
+  return { segments: [{ startTick: 0, startTime, barOriginTick: 0, metric: metricOf(settings) }] }
 }
 
 /**
@@ -70,6 +60,64 @@ function firstIndexAtOrAfter(segment: Segment, step: number, time: number): numb
   while (tickTime(segment, (m - 1) * step) >= time) m--
   while (tickTime(segment, m * step) < time) m++
   return m
+}
+
+function metricOf(settings: Settings): Metric {
+  const { bpm, beats, beatUnit, clickBeats, betweenBeats, clickSound } = settings
+  return { bpm, beats, beatUnit, clickBeats: [...clickBeats], betweenBeats, clickSound }
+}
+
+/** Metric keys whose values differ, as `Settings` keys. */
+export function changedMetricKeys(a: Metric, b: Metric): (keyof Settings)[] {
+  const keys: (keyof Settings)[] = []
+  if (a.bpm !== b.bpm) keys.push('bpm')
+  if (a.beats !== b.beats) keys.push('beats')
+  if (a.beatUnit !== b.beatUnit) keys.push('beatUnit')
+  if (a.betweenBeats !== b.betweenBeats) keys.push('betweenBeats')
+  if (a.clickSound !== b.clickSound) keys.push('clickSound')
+  if (
+    a.clickBeats.length !== b.clickBeats.length ||
+    a.clickBeats.some((on, i) => on !== b.clickBeats[i])
+  ) {
+    keys.push('clickBeats')
+  }
+  return keys
+}
+
+/**
+ * Applies a settings snapshot at the first beat boundary at or after `committedUntil` (AD-6);
+ * a change to `beats` or `beatUnit` waits for the first downbeat from there. Segments that have not
+ * been committed are dropped first, so at most one future segment remains.
+ */
+export function withSettings(
+  timeline: Timeline,
+  settings: Settings,
+  committedUntil: number,
+): Timeline {
+  const kept = timeline.segments.filter((s, i) => i === 0 || s.startTime < committedUntil)
+  const last = kept[kept.length - 1]
+  if (!last) return timeline
+  const metric = metricOf(settings)
+  if (changedMetricKeys(last.metric, metric).length === 0) return { segments: kept }
+
+  let tick = Math.max(
+    firstIndexAtOrAfter(last, PPQ, committedUntil) * PPQ,
+    Math.ceil(last.startTick / PPQ) * PPQ,
+  )
+  const meterChanged =
+    metric.beats !== last.metric.beats || metric.beatUnit !== last.metric.beatUnit
+  if (meterChanged) {
+    const barTicks = last.metric.beats * PPQ
+    const into = (((tick - last.barOriginTick) % barTicks) + barTicks) % barTicks
+    if (into !== 0) tick += barTicks - into
+  }
+  const barOriginTick = meterChanged ? tick : last.barOriginTick
+
+  if (tick === last.startTick) {
+    return { segments: [...kept.slice(0, -1), { ...last, barOriginTick, metric }] }
+  }
+  const next: Segment = { startTick: tick, startTime: tickTime(last, tick), barOriginTick, metric }
+  return { segments: [...kept, next] }
 }
 
 function eventsAtTick(segment: Segment, tick: number): CoreEvent[] {

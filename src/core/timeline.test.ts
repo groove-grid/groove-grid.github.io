@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { PPQ } from './constants.ts'
 import { DEFAULT_SETTINGS, type Settings } from './settings.ts'
 import {
+  changedMetricKeys,
   eventsBetween,
   positionAt,
   startTimeline,
   tickTime,
+  withSettings,
   type CoreEvent,
   type Live,
   type Timeline,
@@ -145,5 +147,105 @@ describe('positionAt', () => {
     expect(positionAt(tl, 0.25)).toBeCloseTo(PPQ / 2, 6)
     expect(positionAt(tl, 2)).toBeCloseTo(0, 6)
     expect(positionAt(tl, 2.25)).toBeCloseTo(PPQ / 2, 6)
+  })
+})
+
+describe('withSettings', () => {
+  const at = (bpm: number, over: Partial<Settings> = {}) => ({ ...DEFAULT_SETTINGS, bpm, ...over })
+  // Start at 0 and 120 BPM: beats at 0, 0.5, 1, ... and committedUntil = 0.7 falls inside beat 2.
+
+  it('starts the new tempo at the first beat boundary at or after committedUntil', () => {
+    const tl = withSettings(make({ bpm: 120 }, 0), at(60), 0.7)
+    expect(tl.segments).toHaveLength(2)
+    const next = tl.segments[1]!
+    expect(next.startTick).toBe(2 * PPQ)
+    expect(next.startTime).toBe(1)
+    expect(next.barOriginTick).toBe(0)
+    expect(next.metric.bpm).toBe(60)
+  })
+
+  it('treats a boundary exactly at committedUntil as uncommitted', () => {
+    const tl = withSettings(make({ bpm: 120 }, 0), at(60), 1)
+    expect(tl.segments[1]!.startTick).toBe(2 * PPQ)
+  })
+
+  it('keeps the click grid whole across the join: no gap, no duplicate, continuous position', () => {
+    const tl = withSettings(make({ bpm: 120 }, 0), at(60), 0.7)
+    const clicks = eventsBetween(tl, live, 0, 6).filter((e) => e.kind === 'click')
+    expect(clicks.map((e) => e.tick)).toEqual(clicks.map((_, n) => n * PPQ))
+    expect(clicks.map((e) => e.time).slice(0, 5)).toEqual([0, 0.5, 1, 2, 3])
+    expect(new Set(clicks.map(key)).size).toBe(clicks.length)
+    expect(positionAt(tl, 1 - 1e-9)).toBeCloseTo(2 * PPQ, 3)
+    expect(positionAt(tl, 1)).toBeCloseTo(2 * PPQ, 6)
+    expect(positionAt(tl, 2)).toBeCloseTo(3 * PPQ, 6)
+  })
+
+  it('drops uncommitted future segments so rapid changes collapse to the latest', () => {
+    let tl = make({ bpm: 120 }, 0)
+    for (const bpm of [90, 100, 110]) tl = withSettings(tl, at(bpm), 0.7)
+    expect(tl.segments).toHaveLength(2)
+    expect(tl.segments[1]!.metric.bpm).toBe(110)
+    expect(tl.segments[1]!.startTick).toBe(2 * PPQ)
+  })
+
+  it('returns to a single segment when the change is undone before the boundary', () => {
+    const tl = withSettings(withSettings(make({ bpm: 120 }, 0), at(60), 0.7), at(120), 0.7)
+    expect(tl.segments).toHaveLength(1)
+  })
+
+  it('keeps a segment that is already committed and appends after it', () => {
+    const first = withSettings(make({ bpm: 120 }, 0), at(60), 0.2)
+    expect(first.segments[1]!.startTime).toBe(0.5)
+    const second = withSettings(first, at(90), 0.6)
+    expect(second.segments.map((s) => s.metric.bpm)).toEqual([120, 60, 90])
+    expect(second.segments[2]!.startTick).toBe(2 * PPQ)
+    expect(second.segments[2]!.startTime).toBe(1.5)
+  })
+
+  it('replaces the first segment when the boundary is its own start', () => {
+    const tl = withSettings(make({ bpm: 120 }, 5), at(60), 5)
+    expect(tl.segments).toHaveLength(1)
+    expect(tl.segments[0]!.metric.bpm).toBe(60)
+    expect(tl.segments[0]!.startTime).toBe(5)
+  })
+
+  it('waits for the downbeat when the meter changes and re-anchors the bar there', () => {
+    const three = at(120, { beats: 3, clickBeats: [true, true, true] })
+    const tl = withSettings(make({ bpm: 120 }, 0), three, 0.7)
+    const next = tl.segments[1]!
+    expect(next.startTick).toBe(4 * PPQ)
+    expect(next.barOriginTick).toBe(4 * PPQ)
+    expect(next.startTime).toBe(2)
+    const downbeats = eventsBetween(tl, live, 0, 6)
+      .filter((e) => e.kind === 'downbeat')
+      .map((e) => e.tick)
+    expect(downbeats).toEqual([0, 4 * PPQ, 7 * PPQ, 10 * PPQ])
+  })
+
+  it('applies tempo with a meter change at the downbeat', () => {
+    const tl = withSettings(
+      make({ bpm: 120 }, 0),
+      at(60, { beats: 3, clickBeats: [true, true, true] }),
+      0.7,
+    )
+    expect(tl.segments[1]!.startTick).toBe(4 * PPQ)
+    expect(tl.segments[1]!.metric.bpm).toBe(60)
+  })
+
+  it('does not mutate the input timeline', () => {
+    const tl = make({ bpm: 120 }, 0)
+    withSettings(tl, at(60), 0.7)
+    expect(tl.segments).toHaveLength(1)
+  })
+})
+
+describe('changedMetricKeys', () => {
+  it('lists only the metric keys that differ', () => {
+    const a = make().segments[0]!.metric
+    expect(changedMetricKeys(a, a)).toEqual([])
+    expect(changedMetricKeys(a, { ...a, bpm: 90, clickBeats: [true, false, true, true] })).toEqual([
+      'bpm',
+      'clickBeats',
+    ])
   })
 })

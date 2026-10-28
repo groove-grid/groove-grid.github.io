@@ -277,4 +277,96 @@ describe('scheduler', () => {
       warn.mockRestore()
     })
   })
+
+  describe('apply while playing', () => {
+    const at = (bpm: number) => ({ ...DEFAULT_SETTINGS, bpm })
+    const spb = (bpm: number) => 60 / bpm
+
+    it('keeps the old tempo up to the beat boundary, then switches with no skipped or doubled click', async () => {
+      const { scheduler, out, clock, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      run(spb(80) * 1.5)
+      scheduler.apply(at(120))
+      run(5)
+      const beats = out.played.map((p) => p.time)
+      const startTime = 10 + START_LEAD
+      const boundary = scheduler.timeline!.segments[1]!
+      expect(boundary.startTick % 960).toBe(0)
+      expect(boundary.startTime).toBeCloseTo(startTime + (boundary.startTick / 960) * spb(80), 9)
+      beats.forEach((time, n) => {
+        const expected =
+          n <= boundary.startTick / 960
+            ? startTime + n * spb(80)
+            : boundary.startTime + (n - boundary.startTick / 960) * spb(120)
+        expect(time).toBeCloseTo(expected, 9)
+      })
+      expect(scheduler.skipped).toBe(0)
+      expect(clock.now()).toBeGreaterThan(boundary.startTime)
+    })
+
+    it('reports pending with changed keys and clears it when the switch time passes', async () => {
+      const { scheduler, clock, run } = setup()
+      const seen: (string[] | null)[] = []
+      scheduler.subscribe(() => seen.push(scheduler.pending ? scheduler.pending.changed : null))
+      await scheduler.start(DEFAULT_SETTINGS)
+      seen.length = 0
+      run(spb(80) * 1.5)
+      scheduler.apply(at(120))
+      const pending = scheduler.pending!
+      expect(pending.changed).toEqual(['bpm'])
+      expect(pending.settings.bpm).toBe(120)
+      expect(pending.atTime).toBe(scheduler.timeline!.segments[1]!.startTime)
+      expect(pending.atTime).toBeGreaterThan(clock.now())
+      run(pending.atTime - clock.now() + WAKEUP_INTERVAL)
+      expect(scheduler.pending).toBeNull()
+      expect(seen).toEqual([['bpm'], null])
+    })
+
+    it('collapses rapid changes to one future segment and the latest value', async () => {
+      const { scheduler, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      run(spb(80) * 1.5)
+      for (const bpm of [90, 100, 110]) scheduler.apply(at(bpm))
+      expect(scheduler.timeline!.segments).toHaveLength(2)
+      expect(scheduler.pending?.settings.bpm).toBe(110)
+    })
+
+    it('leaves nothing pending when the change is undone before the boundary', async () => {
+      const { scheduler, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      run(spb(80) * 1.5)
+      scheduler.apply(at(120))
+      scheduler.apply(DEFAULT_SETTINGS)
+      expect(scheduler.pending).toBeNull()
+      expect(scheduler.timeline!.segments).toHaveLength(1)
+    })
+
+    it('has no pending change for a tempo applied during the start lead', async () => {
+      const { scheduler, out, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      scheduler.apply(at(120))
+      expect(scheduler.pending).toBeNull()
+      expect(scheduler.timeline!.segments).toHaveLength(1)
+      run(spb(120) * 2)
+      expect(out.played[1]!.time - out.played[0]!.time).toBeCloseTo(spb(120), 9)
+    })
+
+    it('clears pending on stop', async () => {
+      const { scheduler, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      run(spb(80) * 1.5)
+      scheduler.apply(at(120))
+      scheduler.stop()
+      expect(scheduler.pending).toBeNull()
+    })
+
+    it('applies immediately while stopped, with no pending', async () => {
+      const { scheduler, out, run } = setup()
+      scheduler.apply(at(120))
+      expect(scheduler.pending).toBeNull()
+      await scheduler.start(at(120))
+      run(spb(120) * 2)
+      expect(out.played[1]!.time - out.played[0]!.time).toBeCloseTo(spb(120), 9)
+    })
+  })
 })
