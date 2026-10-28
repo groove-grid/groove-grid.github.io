@@ -19,3 +19,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-settings-store-and-tempo-steppers.md`
   summary: Test the store-to-engine wiring (`apply` receives new tempo) and `Stepper.svelte` pointer/keyboard handling.
   evidence: Only the store and hold-repeat logic are unit-tested; wiring and component handlers need a DOM test setup or a device check. Fits story 2.3's `apply` tests.
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-3-tempo-changes-land-on-the-beat.md`
+  summary: Test that `App.svelte` greys the numeral while `engine.pending.changed` includes `bpm` (needs a DOM test environment).
+  evidence: Only the engine and core sides of pending are unit-tested; the class binding in `App.svelte` is verified by reading, same gap as 2.1 and 2.2.

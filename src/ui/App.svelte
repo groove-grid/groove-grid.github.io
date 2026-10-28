@@ -21,6 +21,7 @@
   let status = $state<EngineStatus>('stopped')
   let pausedReason = $state<PausedReason | null>(null)
   let silentHint = $state(false)
+  let bpmPending = $state(false)
   // The silent-switch hint shows on the first Start only; kept in memory until Epic 5 persists it.
   let hintUsed = false
   const bpm = $derived(settingsStore.current.bpm)
@@ -33,6 +34,7 @@
     const unsubscribe = engine.subscribe(() => {
       status = engine.status
       pausedReason = engine.pausedReason
+      bpmPending = engine.pending?.changed.includes('bpm') ?? false
       if (status !== 'playing') silentHint = false
     })
     return () => {
@@ -71,7 +73,7 @@
         step={() => settingsStore.stepTempo(-1)}
       />
       <div class="tempo-value">
-        <span class="bpm-numeral">{bpm}</span>
+        <span class="bpm-numeral" class:pending={bpmPending}>{bpm}</span>
         <span class="bpm-unit">BPM</span>
       </div>
       <Stepper
@@ -171,6 +173,10 @@
     line-height: var(--bpm-numeral-line);
     letter-spacing: var(--bpm-numeral-tracking);
     font-variant-numeric: tabular-nums;
+  }
+
+  .bpm-numeral.pending {
+    color: var(--ink-secondary);
   }
 
   .bpm-unit {
