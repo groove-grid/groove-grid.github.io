@@ -155,12 +155,18 @@ export function eventsBetween(timeline: Timeline, live: Live, t0: number, t1: nu
   return events
 }
 
+/** The segment playing at audio time `t` (the first one before the timeline starts). */
+export function segmentAt(timeline: Timeline, t: number): Segment | undefined {
+  let segment = timeline.segments[0]
+  for (const s of timeline.segments) if (s.startTime <= t) segment = s
+  return segment
+}
+
 /** Fractional tick within the bar at audio time `t`; 0 before the timeline starts. */
 export function positionAt(timeline: Timeline, t: number): number {
   const first = timeline.segments[0]
   if (!first || t <= first.startTime) return 0
-  let segment = first
-  for (const s of timeline.segments) if (s.startTime <= t) segment = s
+  const segment = segmentAt(timeline, t)!
   const absTick = segment.startTick + (t - segment.startTime) / secondsPerTick(segment.metric)
   const barTicks = segment.metric.beats * PPQ
   const pos = (absTick - segment.barOriginTick) % barTicks

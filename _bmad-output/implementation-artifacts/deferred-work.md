@@ -22,3 +22,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-3-tempo-changes-land-on-the-beat.md`
   summary: Test that `App.svelte` greys the numeral while `engine.pending.changed` includes `bpm` (needs a DOM test environment).
   evidence: Only the engine and core sides of pending are unit-tested; the class binding in `App.svelte` is verified by reading, same gap as 2.1 and 2.2.
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-the-beat-grid-with-spokes-and-labels.md`
+  summary: Test grid layer drawing and cache reuse (spokes, labels, rebuild only on input change) once a canvas or DOM test environment exists.
+  evidence: Only the pure core and geometry sides are unit-tested; the layer and `App.svelte` ARIA binding are verified by reading and a build, same gap as 2.1-2.4.

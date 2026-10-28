@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import type { ClockReader, EnginePort, EngineStatus, PausedReason } from '../core/ports.ts'
   import { BPM_MAX, BPM_MIN } from '../core/constants.ts'
+  import { gridLabel } from '../core/grid.ts'
   import { createTapTempo } from '../core/tap-tempo.ts'
   import { mount } from '../render/loop.ts'
   import { createDragTempo } from './drag-tempo.ts'
@@ -43,7 +44,7 @@
 
   onMount(() => {
     status = engine.status
-    const unmount = mount(canvas, clock, spike?.onFrame)
+    const unmount = mount(canvas, clock, spike?.onFrame, () => settingsStore.current)
     const releaseWakeLock = createWakeLock(navigator, engine)
     const unsubscribe = engine.subscribe(() => {
       status = engine.status
@@ -76,7 +77,8 @@
     <h1 class="sr-only">Groove Grid</h1>
     <div class="top-bar" aria-hidden="true"></div>
     <div class="circle">
-      <canvas bind:this={canvas} aria-hidden="true"></canvas>
+      <!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
+      <canvas bind:this={canvas} role="img" aria-label={gridLabel(settingsStore.current)}></canvas>
     </div>
     <p class="notice" aria-live="polite">{notice}</p>
     <div class="tempo-row">
