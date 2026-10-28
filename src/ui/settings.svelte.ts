@@ -48,6 +48,17 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
         clickBeats: carryOverClickBeats(current.clickBeats, Math.round(beats)),
       })
     },
+    /** Flips the click on one beat; the last enabled beat stays on (UX-DR17). */
+    toggleClickBeat(index: number): void {
+      if (!Number.isInteger(index) || index < 0 || index >= current.clickBeats.length) return
+      const clickBeats = [...current.clickBeats]
+      clickBeats[index] = !clickBeats[index]
+      if (!clickBeats.some(Boolean)) return
+      commit({ ...current, clickBeats })
+    },
+    setAllClickBeats(): void {
+      commit({ ...current, clickBeats: current.clickBeats.map(() => true) })
+    },
     /** Steps tempo by `delta`; returns whether another step in that direction is possible. */
     stepTempo(delta: number): boolean {
       this.setTempo(current.bpm + delta)

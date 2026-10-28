@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Settings } from '../core/settings.ts'
   import { clickLabel, gridChipLabel, meterLabel } from './chip-labels.ts'
+  import ClickSheet from './ClickSheet.svelte'
   import GridSheet from './GridSheet.svelte'
   import MeterSheet from './MeterSheet.svelte'
   import Picker from './Picker.svelte'
@@ -12,6 +13,8 @@
   let gridOpen = $state(false)
   let meterChip = $state<HTMLButtonElement>()
   let meterOpen = $state(false)
+  let clickChip = $state<HTMLButtonElement>()
+  let clickOpen = $state(false)
 </script>
 
 <div class="top-bar">
@@ -43,7 +46,16 @@
   </div>
   <div class="pair">
     <span class="caption" aria-hidden="true">Click</span>
-    <button type="button" class="chip" aria-label={`Click, ${clickLabel()}`}>{clickLabel()}</button>
+    <button
+      type="button"
+      class="chip"
+      class:open={clickOpen}
+      bind:this={clickChip}
+      aria-label={`Click, ${clickLabel(settings.clickBeats)}`}
+      aria-haspopup="dialog"
+      aria-expanded={clickOpen}
+      onclick={() => (clickOpen = !clickOpen)}>{clickLabel(settings.clickBeats)}</button
+    >
   </div>
 </div>
 
@@ -71,6 +83,16 @@
         gridOpen = false
         gridChip?.focus()
       }}
+    />
+  </Picker>
+{/if}
+
+{#if clickOpen && clickChip}
+  <Picker anchor={clickChip} title="Click" onclose={() => (clickOpen = false)}>
+    <ClickSheet
+      clickBeats={settings.clickBeats}
+      ontoggle={(index) => settingsStore.toggleClickBeat(index)}
+      onall={() => settingsStore.setAllClickBeats()}
     />
   </Picker>
 {/if}

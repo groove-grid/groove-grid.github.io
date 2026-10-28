@@ -105,4 +105,60 @@ describe('settings store', () => {
     store.setMeter(NaN, 8)
     expect(store.current.beatUnit).toBe(4)
   })
+
+  it('toggles one beat and keeps the last enabled beat on', () => {
+    const store = createSettingsStore()
+    const listener = vi.fn()
+    store.subscribe(listener)
+    store.toggleClickBeat(1)
+    store.toggleClickBeat(3)
+    expect(store.current.clickBeats).toEqual([true, false, true, false])
+    store.toggleClickBeat(0)
+    store.toggleClickBeat(2)
+    expect(store.current.clickBeats).toEqual([false, false, true, false])
+    expect(listener).toHaveBeenCalledTimes(3)
+    store.toggleClickBeat(1)
+    expect(store.current.clickBeats).toEqual([false, true, true, false])
+  })
+
+  it('ignores out-of-range beat indices', () => {
+    const store = createSettingsStore()
+    const listener = vi.fn()
+    store.subscribe(listener)
+    store.toggleClickBeat(4)
+    store.toggleClickBeat(-1)
+    store.toggleClickBeat(0.5)
+    expect(store.current.clickBeats).toEqual([true, true, true, true])
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('cannot turn off the only beat of a 1-beat meter', () => {
+    const store = createSettingsStore()
+    store.setMeter(1, 4)
+    store.toggleClickBeat(0)
+    expect(store.current.clickBeats).toEqual([true])
+  })
+
+  it('starts new beats off after a toggle when the meter grows', () => {
+    const store = createSettingsStore()
+    store.toggleClickBeat(1)
+    store.setMeter(5, 4)
+    expect(store.current.clickBeats).toEqual([true, false, true, true, false])
+  })
+
+  it('does not notify for All when every beat is already on', () => {
+    const store = createSettingsStore()
+    const listener = vi.fn()
+    store.subscribe(listener)
+    store.setAllClickBeats()
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('turns every beat on with All', () => {
+    const store = createSettingsStore()
+    store.toggleClickBeat(0)
+    store.toggleClickBeat(2)
+    store.setAllClickBeats()
+    expect(store.current.clickBeats).toEqual([true, true, true, true])
+  })
 })

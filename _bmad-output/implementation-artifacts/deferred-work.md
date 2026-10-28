@@ -39,3 +39,13 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-7-any-meter.md`
   summary: Revisit post-MVP: X/8 meters (6/8, 7/8, 12/8) are confusing because BPM still counts a quarter-note-sized beat on the grid; decide whether beat unit 8 should change what the beat means, or be dropped or reframed (e.g. grouping).
   evidence: User observation: "X/8 doesn't make much sense if the beat stays as quarter"; today `beatUnit` only changes the label and the BPM unit.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-1-choose-which-beats-click.md`
+  summary: Extend the CLICK chip's accessible name to include the sound and the between-beats setting (`Click: Beep, 1 & 3, between beats none`) once 3.2 and 3.4 add them.
+  evidence: 3.1 keeps `Click, {label}` like the other chips; the longer name in the epic context depends on settings that 3.2/3.4 add.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-1-choose-which-beats-click.md`
+  summary: Click sheet interactions (sheet stays open on toggles, last toggle inert, aria-pressed/aria-disabled, live chip label, focus return) have no DOM test or browser check.
+  evidence: No DOM runner and no headless browser on the dev machine; verified by type check and reading only. Do a manual pass at 320px and 768px+ widths.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-1-choose-which-beats-click.md`
+  summary: Beat toggles differ only by background colour, which forced-colors mode overrides; add a `forced-colors: active` style for the on state.
+  evidence: `.toggle.on` sets only background and colour; belongs with the Epic 5 accessibility pass (5.5).

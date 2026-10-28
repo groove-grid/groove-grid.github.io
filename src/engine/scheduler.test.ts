@@ -360,6 +360,30 @@ describe('scheduler', () => {
       expect(scheduler.pending).toBeNull()
     })
 
+    it('applies beat toggles from the next beat, never cancels scheduled clicks, and drops the accent with beat 1', async () => {
+      const { scheduler, out, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      run(spb(80) * 1.5)
+      const scheduled = out.played.length
+      scheduler.apply({ ...DEFAULT_SETTINGS, clickBeats: [false, true, false, true] })
+      expect(scheduler.pending!.changed).toEqual(['clickBeats'])
+      run(spb(80) * 8)
+      const boundary = scheduler.timeline!.segments[1]!.startTick / 960
+      expect(boundary).toBe(scheduled)
+      // `+ 0` turns -0 into 0 so toEqual matches.
+      const beatsPlayed = out.played.map(
+        (p) => Math.round((p.time - 10 - START_LEAD) / spb(80)) + 0,
+      )
+      const before = Array.from({ length: boundary }, (_, n) => n)
+      expect(beatsPlayed.slice(0, boundary)).toEqual(before)
+      expect(out.played[0]!.sampleId).toBe('click-beep-accent')
+      const after = beatsPlayed.slice(boundary)
+      expect(after.length).toBeGreaterThan(2)
+      expect(after.every((n) => n >= boundary && n % 4 !== 0 && n % 4 !== 2)).toBe(true)
+      expect(out.played.slice(boundary).every((p) => p.sampleId === 'click-beep-normal')).toBe(true)
+      expect(out.cancelled).toBe(0)
+    })
+
     it('applies immediately while stopped, with no pending', async () => {
       const { scheduler, out, run } = setup()
       scheduler.apply(at(120))
