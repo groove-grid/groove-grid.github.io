@@ -79,4 +79,30 @@ describe('settings store', () => {
     store.setGrid(5 as never)
     expect(store.current.grid).toBe(4)
   })
+
+  it('sets the meter and carries clickBeats over', () => {
+    const store = createSettingsStore()
+    store.setMeter(6, 8)
+    expect(store.current.beats).toBe(6)
+    expect(store.current.beatUnit).toBe(8)
+    expect(store.current.clickBeats).toEqual([true, true, true, true, true, true])
+    store.setMeter(2, 4)
+    expect(store.current.clickBeats).toEqual([true, true])
+  })
+
+  it('turns new beats on only if every previous beat was on', () => {
+    const store = createSettingsStore({
+      ...createSettingsStore().current,
+      beats: 3,
+      clickBeats: [true, false, true],
+    })
+    store.setMeter(5, 4)
+    expect(store.current.clickBeats).toEqual([true, false, true, false, false])
+  })
+
+  it('ignores a non-finite beat count', () => {
+    const store = createSettingsStore()
+    store.setMeter(NaN, 8)
+    expect(store.current.beatUnit).toBe(4)
+  })
 })

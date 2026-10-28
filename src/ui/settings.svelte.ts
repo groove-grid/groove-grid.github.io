@@ -1,6 +1,12 @@
 import { BPM_MAX, BPM_MIN } from '../core/constants.ts'
 import { DEFAULT_SETTINGS, normalize, type Division, type Settings } from '../core/settings.ts'
 
+/** Kept toggles stay; new beats are on only if every previous beat was on. */
+export function carryOverClickBeats(previous: boolean[], beats: number): boolean[] {
+  const fill = previous.every(Boolean)
+  return Array.from({ length: beats }, (_, i) => (i < previous.length ? previous[i]! : fill))
+}
+
 /** The one settings owner (AD-4). Every change goes through a named action and `normalize`. */
 export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
   let current = $state<Settings>(normalize(initial))
@@ -31,6 +37,16 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
     },
     setGrid(grid: Division): void {
       commit({ ...current, grid })
+    },
+    /** Sets beats and beat unit together; `clickBeats` follows by carry-over (UX-DR17). */
+    setMeter(beats: number, beatUnit: 4 | 8): void {
+      if (!Number.isFinite(beats)) return
+      commit({
+        ...current,
+        beats,
+        beatUnit,
+        clickBeats: carryOverClickBeats(current.clickBeats, Math.round(beats)),
+      })
     },
     /** Steps tempo by `delta`; returns whether another step in that direction is possible. */
     stepTempo(delta: number): boolean {

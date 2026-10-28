@@ -14,3 +14,13 @@ export function gridChipLabel(grid: Division): string {
 export function clickLabel(): string {
   return 'Every beat'
 }
+
+export const METER_PRESETS: readonly { beats: number; beatUnit: 4 | 8 }[] = [
+  { beats: 2, beatUnit: 4 },
+  { beats: 3, beatUnit: 4 },
+  { beats: 4, beatUnit: 4 },
+  { beats: 5, beatUnit: 4 },
+  { beats: 6, beatUnit: 8 },
+  { beats: 7, beatUnit: 8 },
+  { beats: 12, beatUnit: 8 },
+]

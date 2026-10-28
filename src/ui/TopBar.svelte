@@ -2,6 +2,7 @@
   import type { Settings } from '../core/settings.ts'
   import { clickLabel, gridChipLabel, meterLabel } from './chip-labels.ts'
   import GridSheet from './GridSheet.svelte'
+  import MeterSheet from './MeterSheet.svelte'
   import Picker from './Picker.svelte'
   import { settingsStore } from './settings.svelte.ts'
 
@@ -9,13 +10,22 @@
 
   let gridChip = $state<HTMLButtonElement>()
   let gridOpen = $state(false)
+  let meterChip = $state<HTMLButtonElement>()
+  let meterOpen = $state(false)
 </script>
 
 <div class="top-bar">
   <div class="pair">
     <span class="caption" aria-hidden="true">Meter</span>
-    <button type="button" class="chip" aria-label={`Meter, ${meterLabel(settings)}`}
-      >{meterLabel(settings)}</button
+    <button
+      type="button"
+      class="chip"
+      class:open={meterOpen}
+      bind:this={meterChip}
+      aria-label={`Meter, ${meterLabel(settings)}`}
+      aria-haspopup="dialog"
+      aria-expanded={meterOpen}
+      onclick={() => (meterOpen = !meterOpen)}>{meterLabel(settings)}</button
     >
   </div>
   <div class="pair">
@@ -36,6 +46,21 @@
     <button type="button" class="chip" aria-label={`Click, ${clickLabel()}`}>{clickLabel()}</button>
   </div>
 </div>
+
+{#if meterOpen && meterChip}
+  <Picker anchor={meterChip} title="Meter" onclose={() => (meterOpen = false)}>
+    <MeterSheet
+      beats={settings.beats}
+      beatUnit={settings.beatUnit}
+      onpreset={(beats, beatUnit) => {
+        settingsStore.setMeter(beats, beatUnit)
+        meterOpen = false
+        meterChip?.focus()
+      }}
+      onchange={(beats, beatUnit) => settingsStore.setMeter(beats, beatUnit)}
+    />
+  </Picker>
+{/if}
 
 {#if gridOpen && gridChip}
   <Picker anchor={gridChip} title="Grid" onclose={() => (gridOpen = false)}>
