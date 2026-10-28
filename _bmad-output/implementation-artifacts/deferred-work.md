@@ -29,3 +29,13 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-6-choose-visible-subdivisions.md`
   summary: Picker, GridSheet and TopBar interactions (focus trap, Esc, scrim, swipe, popover placement) have no automated test.
   evidence: No DOM test runner is installed; verified by type check and manual inspection only.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-7-any-meter.md`
+  summary: Revisit post-MVP: meter changes feel slow while playing, because they wait for the next downbeat (up to a full bar, about 3s at 80 BPM in 4/4); consider faster feedback or a visible pending state on the METER chip.
+  evidence: User observation after 2.7; the delay is by design (AD-6, FR13) but the lack of feedback reads as lag.
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-7-any-meter.md`
+  summary: Revisit post-MVP: the Meter sheet and settings pickers in general (layout, Other section, beat unit control) do not feel right to the user.
+  evidence: User said they are "not really happy with the settings" after trying 2.7; rework with real usage once the MVP is complete.
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-7-any-meter.md`
+  summary: Revisit post-MVP: X/8 meters (6/8, 7/8, 12/8) are confusing because BPM still counts a quarter-note-sized beat on the grid; decide whether beat unit 8 should change what the beat means, or be dropped or reframed (e.g. grouping).
+  evidence: User observation: "X/8 doesn't make much sense if the beat stays as quarter"; today `beatUnit` only changes the label and the BPM unit.
