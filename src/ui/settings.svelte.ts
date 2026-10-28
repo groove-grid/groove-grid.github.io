@@ -1,5 +1,5 @@
 import { BPM_MAX, BPM_MIN } from '../core/constants.ts'
-import { DEFAULT_SETTINGS, normalize, type Settings } from '../core/settings.ts'
+import { DEFAULT_SETTINGS, normalize, type Division, type Settings } from '../core/settings.ts'
 
 /** The one settings owner (AD-4). Every change goes through a named action and `normalize`. */
 export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
@@ -28,6 +28,9 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
     setTempo(bpm: number): void {
       if (!Number.isFinite(bpm)) return
       commit({ ...current, bpm })
+    },
+    setGrid(grid: Division): void {
+      commit({ ...current, grid })
     },
     /** Steps tempo by `delta`; returns whether another step in that direction is possible. */
     stepTempo(delta: number): boolean {

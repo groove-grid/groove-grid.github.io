@@ -10,6 +10,7 @@
   import { settingsStore } from './settings.svelte.ts'
   import SpikePanel from './SpikePanel.svelte'
   import Stepper from './Stepper.svelte'
+  import TopBar from './TopBar.svelte'
   import type { SpikeHooks } from './spike.ts'
   import { createWakeLock } from './wake-lock.ts'
 
@@ -75,7 +76,7 @@
 <main>
   <div class="column">
     <h1 class="sr-only">Groove Grid</h1>
-    <div class="top-bar" aria-hidden="true"></div>
+    <TopBar settings={settingsStore.current} />
     <div class="circle">
       <!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
       <canvas bind:this={canvas} role="img" aria-label={gridLabel(settingsStore.current)}></canvas>

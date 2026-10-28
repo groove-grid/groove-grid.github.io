@@ -25,3 +25,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-5-the-beat-grid-with-spokes-and-labels.md`
   summary: Test grid layer drawing and cache reuse (spokes, labels, rebuild only on input change) once a canvas or DOM test environment exists.
   evidence: Only the pure core and geometry sides are unit-tested; the layer and `App.svelte` ARIA binding are verified by reading and a build, same gap as 2.1-2.4.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-6-choose-visible-subdivisions.md`
+  summary: Picker, GridSheet and TopBar interactions (focus trap, Esc, scrim, swipe, popover placement) have no automated test.
+  evidence: No DOM test runner is installed; verified by type check and manual inspection only.

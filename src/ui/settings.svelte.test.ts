@@ -67,4 +67,16 @@ describe('settings store', () => {
     store.setTempo(90)
     expect(listener).not.toHaveBeenCalled()
   })
+
+  it('sets the grid level and notifies only on change', () => {
+    const store = createSettingsStore()
+    const listener = vi.fn()
+    store.subscribe(listener)
+    store.setGrid(2)
+    expect(store.current.grid).toBe(2)
+    store.setGrid(2)
+    expect(listener).toHaveBeenCalledTimes(1)
+    store.setGrid(5 as never)
+    expect(store.current.grid).toBe(4)
+  })
 })
