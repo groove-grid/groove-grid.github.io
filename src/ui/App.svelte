@@ -2,7 +2,9 @@
   import { onMount } from 'svelte'
   import type { ClockReader, EnginePort, EngineStatus, PausedReason } from '../core/ports.ts'
   import { BPM_MAX, BPM_MIN } from '../core/constants.ts'
+  import { createTapTempo } from '../core/tap-tempo.ts'
   import { mount } from '../render/loop.ts'
+  import { createDragTempo } from './drag-tempo.ts'
   import { deriveNotice, isIos } from './notice.ts'
   import { settingsStore } from './settings.svelte.ts'
   import SpikePanel from './SpikePanel.svelte'
@@ -26,6 +28,18 @@
   let hintUsed = false
   const bpm = $derived(settingsStore.current.bpm)
   const notice = $derived(deriveNotice({ status, pausedReason, silentHint }))
+
+  const tapTempo = createTapTempo()
+  const drag = createDragTempo(
+    () => settingsStore.current.bpm,
+    (value) => settingsStore.setTempo(value),
+  )
+
+  // Tap uses the event's monotonic timestamp, so it works before the audio context exists.
+  function tap(event: PointerEvent | MouseEvent) {
+    const next = tapTempo.tap(event.timeStamp)
+    if (next !== null) settingsStore.setTempo(next)
+  }
 
   onMount(() => {
     status = engine.status
@@ -72,9 +86,22 @@
         disabled={bpm <= BPM_MIN}
         step={() => settingsStore.stepTempo(-1)}
       />
-      <div class="tempo-value">
-        <span class="bpm-numeral" class:pending={bpmPending}>{bpm}</span>
-        <span class="bpm-unit">BPM</span>
+      <div
+        class="tempo-value"
+        role="presentation"
+        onpointerdown={(event) => {
+          if (event.button !== 0) return
+          event.currentTarget.setPointerCapture(event.pointerId)
+          drag.begin(event.clientY)
+        }}
+        onpointermove={(event) => drag.move(event.clientY)}
+        onpointerup={() => drag.end()}
+        onpointercancel={() => drag.end()}
+      >
+        <div class="readout">
+          <span class="bpm-numeral" class:pending={bpmPending}>{bpm}</span>
+          <span class="bpm-unit">BPM</span>
+        </div>
       </div>
       <Stepper
         label="Increase tempo"
@@ -84,7 +111,10 @@
       />
     </div>
     <div class="transport-row">
-      <button type="button" onclick={toggle}>{status === 'playing' ? 'Stop' : 'Start'}</button>
+      <button type="button" class="tap" onclick={tap}>Tap</button>
+      <button type="button" class="transport" onclick={toggle}
+        >{status === 'playing' ? 'Stop' : 'Start'}</button
+      >
     </div>
   </div>
   {#if spike}<SpikePanel snapshot={spike.snapshot} {status} />{/if}
@@ -160,8 +190,16 @@
   }
 
   .tempo-value {
+    align-self: stretch;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    display: grid;
+    place-content: center;
+  }
+
+  .readout {
     display: flex;
-    justify-content: center;
     align-items: baseline;
     column-gap: var(--space-2);
   }
@@ -193,7 +231,6 @@
   }
 
   button {
-    flex: 1;
     height: var(--control-lg);
     border: 0;
     border-radius: var(--radius-full);
@@ -207,6 +244,26 @@
 
   button:active {
     opacity: 0.85;
+  }
+
+  .transport {
+    flex: 1;
+  }
+
+  .tap {
+    min-width: 88px;
+    padding: 0 var(--space-4);
+    border: 1.5px solid var(--ink);
+    background: var(--surface-raised);
+    color: var(--ink);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .tap:active {
+    opacity: 1;
+    background: var(--surface-pressed);
   }
 
   button:focus-visible {
