@@ -7,6 +7,7 @@ export interface Theme {
   gridEighth: string
   gridSixteenth: string
   surface: string
+  surfacePulse: string
   font: string
 }
 
@@ -21,6 +22,8 @@ export interface Frame {
   beats: number
   /** Finest visible subdivision level. */
   grid: Division
+  /** `prefers-reduced-motion: reduce`: tail and pulse off, the dot still sweeps. */
+  reducedMotion: boolean
   theme: Theme
 }
 

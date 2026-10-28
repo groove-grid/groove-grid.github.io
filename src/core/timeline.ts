@@ -172,3 +172,18 @@ export function positionAt(timeline: Timeline, t: number): number {
   const pos = (absTick - segment.barOriginTick) % barTicks
   return pos < 0 ? pos + barTicks : pos
 }
+
+/** Audio time of the latest downbeat at or before `t`; null before the timeline starts. */
+export function lastDownbeatTime(timeline: Timeline, t: number): number | null {
+  const first = timeline.segments[0]
+  if (!first || t < first.startTime) return null
+  const segment = segmentAt(timeline, t)!
+  const absTick = segment.startTick + (t - segment.startTime) / secondsPerTick(segment.metric)
+  const barTicks = segment.metric.beats * PPQ
+  // The epsilon keeps a frame that lands exactly on a downbeat from rounding back a whole bar.
+  const bars = Math.floor((absTick - segment.barOriginTick + 1e-6) / barTicks)
+  const tick = segment.barOriginTick + bars * barTicks
+  let owner = timeline.segments[0]!
+  for (const s of timeline.segments) if (s.startTick <= tick) owner = s
+  return Math.min(tickTime(owner, tick), t)
+}

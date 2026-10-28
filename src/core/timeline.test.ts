@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, type Settings } from './settings.ts'
 import {
   changedMetricKeys,
   eventsBetween,
+  lastDownbeatTime,
   positionAt,
   startTimeline,
   tickTime,
@@ -247,5 +248,37 @@ describe('changedMetricKeys', () => {
       'bpm',
       'clickBeats',
     ])
+  })
+})
+
+describe('lastDownbeatTime', () => {
+  it('is null before the start and the start during the first bar', () => {
+    const tl = make({ bpm: 120 }, 5)
+    expect(lastDownbeatTime(tl, 4.9)).toBeNull()
+    expect(lastDownbeatTime(tl, 5)).toBe(5)
+    expect(lastDownbeatTime(tl, 6.9)).toBe(5)
+  })
+
+  it('lands exactly on later downbeats', () => {
+    const tl = make({ bpm: 120 }, 5)
+    expect(lastDownbeatTime(tl, 7)).toBe(7)
+    expect(lastDownbeatTime(tl, 8.5)).toBe(7)
+  })
+
+  it('finds a downbeat in an earlier segment after a mid-bar tempo change', () => {
+    // 120 BPM from 5; 60 BPM from beat 3 (t = 6); the bar still starts at 5.
+    const tl = withSettings(make({ bpm: 120 }, 5), { ...DEFAULT_SETTINGS, bpm: 60 }, 5.8)
+    expect(tl.segments[1]!.startTime).toBe(6)
+    expect(lastDownbeatTime(tl, 7.5)).toBe(5)
+    // Beats 3 and 4 at 1 s each: next downbeat at 6 + 2 = 8.
+    expect(lastDownbeatTime(tl, 8)).toBe(8)
+  })
+
+  it('restarts the bar at a meter change', () => {
+    const tl = withSettings(make({ bpm: 120 }, 5), { ...DEFAULT_SETTINGS, bpm: 120, beats: 3 }, 5.8)
+    const change = tl.segments[1]!.startTime
+    expect(change).toBe(7)
+    expect(lastDownbeatTime(tl, 8.4)).toBe(7)
+    expect(lastDownbeatTime(tl, 8.6)).toBe(8.5)
   })
 })

@@ -29,3 +29,9 @@ export const DRAG_PX_PER_BPM = 6
 /** Tap tempo averages up to this many intervals and forgets taps after this long a pause (FR12). */
 export const TAP_MAX_INTERVALS = 4
 export const TAP_RESET_MS = 2000
+
+/** Beat-1 pulse decay from `surface-pulse` back to `surface` (UX-DR9). */
+export const PULSE_DECAY_MS = 180
+
+/** Comet tail arc behind the dot, constant at every tempo (UX-DR5). */
+export const TAIL_ARC_DEG = 30

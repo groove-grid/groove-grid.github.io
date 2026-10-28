@@ -126,7 +126,7 @@
 <style>
   :global(body) {
     margin: 0;
-    background: var(--surface);
+    background: var(--pulse, var(--surface));
     color: var(--ink);
     font-family: var(--font);
     font-size: var(--body-size);
