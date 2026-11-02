@@ -64,3 +64,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
   summary: Between beats sheet interactions (arrow keys, roving tabindex, Tab trap with a roving group, stays open, chip name) have no DOM test or browser check.
   evidence: No DOM runner and no headless browser on the dev machine; verified by type check and reading only. Check Tab and arrows in a manual pass.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
+  summary: Idea, not planned: turn individual sub-beats on or off for the click (user question, 2026-11-02). Try Epic 4 markers with a marker sound first, since they already allow custom sub-beat patterns; a real version would go through `bmad-correct-course`.
+  evidence: `betweenBeats` is one division for the whole bar. Markers differ: separate sound, not muted, tied to the visible grid. Per-sub-beat toggles need a new settings shape and a much denser Click sheet (16ths in 4/4 is 16 toggles).
