@@ -70,6 +70,56 @@ describe('eventsBetween', () => {
     ])
   })
 
+  it.each([
+    [2, [480]],
+    [4, [240, 480, 720]],
+    [3, [320, 640]],
+  ] as const)('plans division %i inside each enabled beat only', (betweenBeats, inside) => {
+    const tl = make({ beats: 4, clickBeats: [false, true, false, true], betweenBeats })
+    const clicks = eventsBetween(tl, live, 10, 10 + (4 * 60) / 80).filter((e) => e.kind === 'click')
+    const sub = (beat: number) => inside.map((t) => [beat * PPQ + t, 'sub'])
+    expect(clicks.map((e) => [e.tick, e.kind === 'click' ? e.level : ''])).toEqual([
+      [PPQ, 'beat'],
+      ...sub(1),
+      [3 * PPQ, 'beat'],
+      ...sub(3),
+    ])
+  })
+
+  it.each([
+    [2, 480],
+    [4, 240],
+    [3, 320],
+  ] as const)(
+    'divides the beat, not the quarter note, in /8 for division %i',
+    (betweenBeats, step) => {
+      const tl = make({ beats: 2, beatUnit: 8, betweenBeats })
+      const clicks = eventsBetween(tl, live, 10, 10 + 60 / 80).filter((e) => e.kind === 'click')
+      expect(clicks.map((e) => e.tick)).toEqual(
+        Array.from({ length: PPQ / step }, (_, i) => i * step),
+      )
+    },
+  )
+
+  it('plans no clicks with every beat off, whatever the division', () => {
+    const tl = make({ beats: 4, clickBeats: [false, false, false, false], betweenBeats: 4 })
+    const events = eventsBetween(tl, live, 10, 10 + (4 * 60) / 80)
+    expect(events.filter((e) => e.kind === 'click')).toEqual([])
+  })
+
+  it('stops the old division at the boundary when switching back to None or across divisions', () => {
+    const spb = 60 / 80
+    const start = make({ betweenBeats: 3 })
+    for (const betweenBeats of [1, 4] as const) {
+      const tl = withSettings(start, { ...DEFAULT_SETTINGS, betweenBeats }, 10 + spb * 0.5)
+      const ticks = eventsBetween(tl, live, 10, 10 + spb * 2)
+        .filter((e) => e.kind === 'click')
+        .map((e) => e.tick)
+      const after = betweenBeats === 1 ? [PPQ] : [PPQ, PPQ + 240, PPQ + 480, PPQ + 720]
+      expect(ticks).toEqual([0, 320, 640, ...after])
+    }
+  })
+
   it('has no between-beat clicks for betweenBeats 1 and no clicks on disabled beats', () => {
     const tl = make({ beats: 4, clickBeats: [false, true, false, false] })
     const ticks = eventsBetween(tl, live, 10, 10 + (60 / 80) * 4).filter((e) => e.kind === 'click')

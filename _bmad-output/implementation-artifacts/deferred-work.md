@@ -49,3 +49,18 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-1-choose-which-beats-click.md`
   summary: Beat toggles differ only by background colour, which forced-colors mode overrides; add a `forced-colors: active` style for the on state.
   evidence: `.toggle.on` sets only background and colour; belongs with the Epic 5 accessibility pass (5.5).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
+  summary: The CLICK chip's accessible name still needs the sound (story 3.4); the docs write `Click: Beep, ...` while the code uses `Click, ...` like the other chips, so settle the separator then.
+  evidence: 3.2 added only the between-beats part; `clickChipName` in `chip-labels.ts`, epic-3-context line 40, EXPERIENCE.md line 237.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
+  summary: `SegmentedControl` does not drop labels to caption size on overflow (DESIGN.md); needed once `Woodblock` joins the 4-segment `Click sound` control in 3.4.
+  evidence: Labels are `nowrap` in a clipped group. `Triplets` fits a quarter of a 320px sheet, `Woodblock` likely does not.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
+  summary: Move `Beat unit` in `MeterSheet.svelte` to `SegmentedControl`, which also gives it the DESIGN.md look and arrow keys.
+  evidence: `MeterSheet.svelte` lines 61-72 are hand-rolled separate pills with no arrow navigation.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
+  summary: The selected segment differs only by background colour, which forced-colors mode overrides; add it to the 5.5 accessibility pass with the beat toggles.
+  evidence: `.segment.selected` sets only background and colour; no `forced-colors` rule exists in `src`.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
+  summary: Between beats sheet interactions (arrow keys, roving tabindex, Tab trap with a roving group, stays open, chip name) have no DOM test or browser check.
+  evidence: No DOM runner and no headless browser on the dev machine; verified by type check and reading only. Check Tab and arrows in a manual pass.

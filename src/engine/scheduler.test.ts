@@ -384,6 +384,35 @@ describe('scheduler', () => {
       expect(out.cancelled).toBe(0)
     })
 
+    it('applies between beats from the next beat, softer than beats, without cancelling', async () => {
+      const { scheduler, out, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      run(spb(80) * 1.5)
+      const scheduled = out.played.length
+      scheduler.apply({ ...DEFAULT_SETTINGS, betweenBeats: 2 })
+      expect(scheduler.pending!.changed).toEqual(['betweenBeats'])
+      run(spb(80) * 8)
+      // `+ 0` turns -0 into 0 so toEqual matches.
+      const eighths = out.played.map(
+        (p) => Math.round((p.time - 10 - START_LEAD) / (spb(80) / 2)) + 0,
+      )
+      const before = Array.from({ length: scheduled }, (_, n) => 2 * n)
+      expect(eighths.slice(0, scheduled)).toEqual(before)
+      const boundary = 2 * scheduled
+      expect(eighths.slice(scheduled, scheduled + 3)).toEqual([
+        boundary,
+        boundary + 1,
+        boundary + 2,
+      ])
+      const accent = out.played[0]!
+      const sub = out.played[scheduled + 1]!
+      const beat = out.played[scheduled + 2]!
+      expect(sub.sampleId).toBe('click-beep-normal')
+      expect(accent.gain).toBeGreaterThan(beat.gain)
+      expect(beat.gain).toBeGreaterThan(sub.gain)
+      expect(out.cancelled).toBe(0)
+    })
+
     it('applies immediately while stopped, with no pending', async () => {
       const { scheduler, out, run } = setup()
       scheduler.apply(at(120))

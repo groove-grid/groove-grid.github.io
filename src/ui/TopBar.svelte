@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Settings } from '../core/settings.ts'
-  import { clickLabel, gridChipLabel, meterLabel } from './chip-labels.ts'
+  import { clickChipName, clickLabel, gridChipLabel, meterLabel } from './chip-labels.ts'
   import ClickSheet from './ClickSheet.svelte'
   import GridSheet from './GridSheet.svelte'
   import MeterSheet from './MeterSheet.svelte'
@@ -51,7 +51,7 @@
       class="chip"
       class:open={clickOpen}
       bind:this={clickChip}
-      aria-label={`Click, ${clickLabel(settings.clickBeats)}`}
+      aria-label={clickChipName(settings.clickBeats, settings.betweenBeats)}
       aria-haspopup="dialog"
       aria-expanded={clickOpen}
       onclick={() => (clickOpen = !clickOpen)}>{clickLabel(settings.clickBeats)}</button
@@ -91,8 +91,10 @@
   <Picker anchor={clickChip} title="Click" onclose={() => (clickOpen = false)}>
     <ClickSheet
       clickBeats={settings.clickBeats}
+      betweenBeats={settings.betweenBeats}
       ontoggle={(index) => settingsStore.toggleClickBeat(index)}
       onall={() => settingsStore.setAllClickBeats()}
+      onbetweenbeats={(division) => settingsStore.setBetweenBeats(division)}
     />
   </Picker>
 {/if}

@@ -1,15 +1,25 @@
 <script lang="ts">
-  import { beatToggleRows } from './chip-labels.ts'
+  import type { Division } from '../core/settings.ts'
+  import { beatToggleRows, betweenBeatsLabel } from './chip-labels.ts'
+  import SegmentedControl from './SegmentedControl.svelte'
 
   let {
     clickBeats,
+    betweenBeats,
     ontoggle,
     onall,
+    onbetweenbeats,
   }: {
     clickBeats: readonly boolean[]
+    betweenBeats: Division
     ontoggle: (index: number) => void
     onall: () => void
+    onbetweenbeats: (division: Division) => void
   } = $props()
+
+  const BETWEEN_BEATS: readonly Division[] = [1, 2, 4, 3]
+  const betweenOptions = BETWEEN_BEATS.map((value) => ({ value, label: betweenBeatsLabel(value) }))
+  const betweenId = $props.id()
 
   const rows = $derived(beatToggleRows(clickBeats.length))
   const allOn = $derived(clickBeats.every(Boolean))
@@ -46,6 +56,13 @@
     </div>
   {/each}
 </div>
+<h3 class="section between" id={betweenId}>Between beats</h3>
+<SegmentedControl
+  labelledby={betweenId}
+  options={betweenOptions}
+  value={betweenBeats}
+  onselect={onbetweenbeats}
+/>
 
 <style>
   .title {
@@ -69,6 +86,10 @@
     letter-spacing: var(--chip-caption-tracking);
     text-transform: uppercase;
     color: var(--ink-secondary);
+  }
+
+  .between {
+    margin: var(--space-3) 0 var(--space-1);
   }
 
   .all {

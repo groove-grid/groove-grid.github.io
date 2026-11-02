@@ -18,7 +18,9 @@
   let top = $state(0)
   let swipeStart: number | null = null
 
-  const FOCUSABLE = 'button:not([disabled]), [href], input, select, [tabindex]:not([tabindex="-1"])'
+  // Roving segments carry tabindex -1: Tab cannot reach them, so the trap must not count them.
+  const FOCUSABLE =
+    'button:not([disabled]):not([tabindex="-1"]), [href], input, select, [tabindex]:not([tabindex="-1"])'
 
   function focusables(): HTMLElement[] {
     return [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)]

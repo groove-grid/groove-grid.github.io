@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { beatToggleRows, clickLabel, gridChipLabel, meterLabel } from './chip-labels.ts'
+import {
+  beatToggleRows,
+  betweenBeatsLabel,
+  clickChipName,
+  clickLabel,
+  gridChipLabel,
+  meterLabel,
+} from './chip-labels.ts'
 
 describe('chip labels', () => {
   it('formats the meter', () => {
@@ -46,5 +53,25 @@ describe('chip labels', () => {
     expect(beatToggleRows(14).map((r) => r.length)).toEqual([7, 7])
     expect(beatToggleRows(15).map((r) => r.length)).toEqual([5, 5, 5])
     expect(beatToggleRows(16).map((r) => r.length)).toEqual([6, 5, 5])
+  })
+})
+
+describe('between beats labels', () => {
+  it('names each division, with None instead of the grid label Beats', () => {
+    expect(([1, 2, 4, 3] as const).map(betweenBeatsLabel)).toEqual([
+      'None',
+      '8ths',
+      '16ths',
+      'Triplets',
+    ])
+  })
+
+  it('adds the between-beats setting to the accessible name only', () => {
+    const beats = [true, false, true, false]
+    expect(clickChipName(beats, 1)).toBe('Click, 1 & 3, between beats none')
+    expect(clickChipName(beats, 2)).toBe('Click, 1 & 3, between beats 8ths')
+    expect(clickChipName(beats, 4)).toBe('Click, 1 & 3, between beats 16ths')
+    expect(clickChipName(beats, 3)).toBe('Click, 1 & 3, between beats triplets')
+    expect(clickLabel(beats)).toBe('1 & 3')
   })
 })

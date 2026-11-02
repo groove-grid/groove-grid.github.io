@@ -2,6 +2,24 @@ import { describe, expect, it, vi } from 'vitest'
 import { createSettingsStore } from './settings.svelte.ts'
 
 describe('settings store', () => {
+  it('defaults between beats to None, sets it apart from the grid, and repairs bad input', () => {
+    const store = createSettingsStore()
+    expect(store.current.betweenBeats).toBe(1)
+    store.setBetweenBeats(3)
+    expect(store.current.betweenBeats).toBe(3)
+    expect(store.current.grid).toBe(createSettingsStore().current.grid)
+    store.setBetweenBeats(7 as never)
+    expect(store.current.betweenBeats).toBe(1)
+  })
+
+  it('keeps between beats through grid and meter changes', () => {
+    const store = createSettingsStore()
+    store.setBetweenBeats(4)
+    store.setGrid(3)
+    store.setMeter(7, 8)
+    expect(store.current.betweenBeats).toBe(4)
+  })
+
   it('starts at the default 80 BPM', () => {
     expect(createSettingsStore().current.bpm).toBe(80)
   })

@@ -20,6 +20,16 @@ export function clickLabel(clickBeats: readonly boolean[]): string {
   return `${on.length} of ${clickBeats.length} beats`
 }
 
+export function betweenBeatsLabel(betweenBeats: Division): string {
+  return betweenBeats === 1 ? 'None' : GRID_LABELS[betweenBeats]
+}
+
+/** The chip shows only the beats; the between-beats setting is in its accessible name. */
+export function clickChipName(clickBeats: readonly boolean[], betweenBeats: Division): string {
+  const between = betweenBeatsLabel(betweenBeats).toLowerCase()
+  return `Click, ${clickLabel(clickBeats)}, between beats ${between}`
+}
+
 const BEAT_TOGGLES_PER_ROW = 7
 
 /** Splits beats 1…n into balanced rows of at most 7, extra toggles in the top rows. */

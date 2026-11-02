@@ -58,6 +58,9 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
     setAllClickBeats(): void {
       commit({ ...current, clickBeats: current.clickBeats.map(() => true) })
     },
+    setBetweenBeats(betweenBeats: Division): void {
+      commit({ ...current, betweenBeats })
+    },
     /** Steps tempo by `delta`; returns whether another step in that direction is possible. */
     stepTempo(delta: number): boolean {
       this.setTempo(current.bpm + delta)
