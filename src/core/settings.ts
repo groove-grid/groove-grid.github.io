@@ -68,7 +68,6 @@ export function normalize(input: unknown): Settings {
   const clickBeats = Array.from({ length: beats }, (_, i) =>
     i < given.length ? given[i] === true : true,
   )
-  if (!clickBeats.some(Boolean)) clickBeats[0] = true
 
   const clickSound = CLICK_SOUND_IDS.find((id) => id === raw.clickSound) ?? d.clickSound
   const markerSound = MARKER_SOUND_IDS.find((id) => id === raw.markerSound) ?? null

@@ -106,7 +106,7 @@ describe('settings store', () => {
     expect(store.current.beatUnit).toBe(4)
   })
 
-  it('toggles one beat and keeps the last enabled beat on', () => {
+  it('toggles one beat at a time, down to every beat off', () => {
     const store = createSettingsStore()
     const listener = vi.fn()
     store.subscribe(listener)
@@ -115,10 +115,10 @@ describe('settings store', () => {
     expect(store.current.clickBeats).toEqual([true, false, true, false])
     store.toggleClickBeat(0)
     store.toggleClickBeat(2)
-    expect(store.current.clickBeats).toEqual([false, false, true, false])
-    expect(listener).toHaveBeenCalledTimes(3)
+    expect(store.current.clickBeats).toEqual([false, false, false, false])
+    expect(listener).toHaveBeenCalledTimes(4)
     store.toggleClickBeat(1)
-    expect(store.current.clickBeats).toEqual([false, true, true, false])
+    expect(store.current.clickBeats).toEqual([false, true, false, false])
   })
 
   it('ignores out-of-range beat indices', () => {
@@ -132,11 +132,11 @@ describe('settings store', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
-  it('cannot turn off the only beat of a 1-beat meter', () => {
+  it('keeps every beat off when the meter grows', () => {
     const store = createSettingsStore()
-    store.setMeter(1, 4)
-    store.toggleClickBeat(0)
-    expect(store.current.clickBeats).toEqual([true])
+    for (const index of [0, 1, 2, 3]) store.toggleClickBeat(index)
+    store.setMeter(6, 4)
+    expect(store.current.clickBeats).toEqual(Array(6).fill(false))
   })
 
   it('starts new beats off after a toggle when the meter grows', () => {

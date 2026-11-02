@@ -10,10 +10,11 @@ export function gridChipLabel(grid: Division): string {
   return GRID_LABELS[grid]
 }
 
-/** Names the enabled beats: `Every beat`, `Beat n only`, `2 & 4`, `1, 2 & 4` or `n of m beats` (UX-DR12). */
+/** Names the enabled beats: `Every beat`, `No beats`, `Beat n only`, `2 & 4`, `1, 2 & 4` or `n of m beats` (UX-DR12). */
 export function clickLabel(clickBeats: readonly boolean[]): string {
   const on = clickBeats.flatMap((enabled, i) => (enabled ? [i + 1] : []))
   if (on.length === clickBeats.length) return 'Every beat'
+  if (on.length === 0) return 'No beats'
   if (on.length === 1) return `Beat ${on[0]} only`
   if (on.length <= 3) return `${on.slice(0, -1).join(', ')} & ${on[on.length - 1]}`
   return `${on.length} of ${clickBeats.length} beats`

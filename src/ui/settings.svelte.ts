@@ -48,12 +48,11 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
         clickBeats: carryOverClickBeats(current.clickBeats, Math.round(beats)),
       })
     },
-    /** Flips the click on one beat; the last enabled beat stays on (UX-DR17). */
+    /** Flips the click on one beat; every beat may be off. */
     toggleClickBeat(index: number): void {
       if (!Number.isInteger(index) || index < 0 || index >= current.clickBeats.length) return
       const clickBeats = [...current.clickBeats]
       clickBeats[index] = !clickBeats[index]
-      if (!clickBeats.some(Boolean)) return
       commit({ ...current, clickBeats })
     },
     setAllClickBeats(): void {

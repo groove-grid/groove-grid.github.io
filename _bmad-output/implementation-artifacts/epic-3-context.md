@@ -15,7 +15,7 @@ Give the musician control over the click so they can train internal time: choose
 
 ## Requirements & Constraints
 
-- **Click on beats:** one toggle per beat of the current meter, any combination, plus an `All` action. At least one beat must stay enabled. The last enabled toggle cannot be turned off, and the caption `Use Mute for silence.` appears under the row.
+- **Click on beats:** one toggle per beat of the current meter, any combination, plus an `All` action. Every beat may be off (user decision 2026-11-02, overrides FR8 and UX-DR16); the chip then reads `No beats`.
 - **Accent rule:** the beat-1 (accent) variant plays only when beat 1 is enabled. All other enabled beats use the normal variant.
 - **Between beats:** `None` / `8ths` / `16ths` / `Triplets`. These clicks sound only inside enabled beats and use the normal variant at a softer gain. The choice is independent of the visible grid, and the division is relative to the beat in both /4 and /8 meters. Default is `None`.
 - **Loudness order:** beat 1 > other beats > between-beat clicks.
@@ -28,7 +28,7 @@ Give the musician control over the click so they can train internal time: choose
 ## Technical Decisions
 
 - `clickBeats`, `betweenBeats` and `clickSound` are **metric** fields stored in the immutable core `Timeline` segment. Changing them goes through `withSettings` and applies at the first beat boundary at or after `committedUntil`, with rapid changes collapsing to the latest. `muted` is a **Live** field (not in the Timeline) and applies at once.
-- Settings shape: `clickBeats: boolean[]` (length === `beats`, at least one true), `betweenBeats: Division` where `1` means None (never a `'none'` string), `clickSound: ClickSoundId`, `muted: boolean`. Core `normalize` is the only validator and must enforce the at-least-one-true rule. Mutate settings only through named store actions in `src/ui/settings.svelte.ts` (e.g. `toggleBeat`).
+- Settings shape: `clickBeats: boolean[]` (length === `beats`, all false allowed), `betweenBeats: Division` where `1` means None (never a `'none'` string), `clickSound: ClickSoundId`, `muted: boolean`. Core `normalize` is the only validator. Mutate settings only through named store actions in `src/ui/settings.svelte.ts` (e.g. `toggleBeat`).
 - The core planner emits `click` events with `level: 'accent' | 'beat' | 'sub'` only for enabled beats, and `sub` only inside enabled beats. Steps use 960 ticks per beat (`960 / division`). Event times are closed-form from the segment start, never accumulated.
 - Three audio buses: **click** (mute sets gain to 0 while scheduling continues, which is what makes unmute land in phase), **marker** (never muted) and **preview** (never muted). Gain per level gives the loudness order. Playback goes through the `AudioOut` port: `play(sampleId, time, gain, bus)`.
 - `EnginePort.preview(soundId)` is called from components through the injected port. The engine ignores it while playing and plays the two variants 300 ms apart in audio time. `resume()` must be called synchronously inside the preview gesture while stopped. Only `main.ts` calls `engine.apply`.

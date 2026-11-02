@@ -35,14 +35,14 @@ describe('normalize', () => {
     expect(normalize({ bpm: '120' }).bpm).toBe(80)
   })
 
-  it('resizes clickBeats to beats and keeps at least one on', () => {
+  it('resizes clickBeats to beats and allows every beat off', () => {
     expect(normalize({ beats: 3, clickBeats: [false] }).clickBeats).toEqual([false, true, true])
     expect(normalize({ beats: 2, clickBeats: [true, false, false, true] }).clickBeats).toEqual([
       true,
       false,
     ])
     expect(normalize({ beats: 3, clickBeats: [false, false, false] }).clickBeats).toEqual([
-      true,
+      false,
       false,
       false,
     ])

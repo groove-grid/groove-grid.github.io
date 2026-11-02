@@ -13,8 +13,6 @@
 
   const rows = $derived(beatToggleRows(clickBeats.length))
   const allOn = $derived(clickBeats.every(Boolean))
-  const onlyOne = $derived(clickBeats.filter(Boolean).length === 1)
-  const captionId = $props.id()
 </script>
 
 <h2 class="title">Click</h2>
@@ -36,25 +34,18 @@
     <div class="row">
       {#each row as beat (beat)}
         {@const on = clickBeats[beat - 1] ?? false}
-        {@const last = on && onlyOne}
         <button
           type="button"
           class="toggle"
           class:on
-          class:last
           aria-label={`Click on beat ${beat}`}
           aria-pressed={on}
-          aria-disabled={last}
-          aria-describedby={last ? captionId : undefined}
-          onclick={() => {
-            if (!last) ontoggle(beat - 1)
-          }}>{beat}</button
+          onclick={() => ontoggle(beat - 1)}>{beat}</button
         >
       {/each}
     </div>
   {/each}
 </div>
-<p class="caption" id={captionId} aria-live="polite">{onlyOne ? 'Use Mute for silence.' : ''}</p>
 
 <style>
   .title {
@@ -139,19 +130,5 @@
   .toggle.on {
     background: var(--ink);
     color: var(--surface-raised);
-  }
-
-  .toggle.last {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  .caption {
-    min-height: calc(var(--caption-size) * var(--caption-line));
-    margin: var(--space-2) 0 0;
-    font-size: var(--caption-size);
-    font-weight: var(--caption-weight);
-    line-height: var(--caption-line);
-    color: var(--ink-secondary);
   }
 </style>

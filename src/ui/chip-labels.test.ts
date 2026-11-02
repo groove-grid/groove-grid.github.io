@@ -26,6 +26,7 @@ describe('chip labels', () => {
     expect(clickLabel(on(2, 1, 2))).toBe('Every beat')
     expect(clickLabel(on(3, 1, 3))).toBe('1 & 3')
     expect(clickLabel(on(5, 2, 3, 5))).toBe('2, 3 & 5')
+    expect(clickLabel(on(4))).toBe('No beats')
     expect(clickLabel(on(4, 1))).toBe('Beat 1 only')
     expect(clickLabel(on(4, 3))).toBe('Beat 3 only')
     expect(clickLabel(on(4, 2, 4))).toBe('2 & 4')
