@@ -15,7 +15,7 @@ Give the musician control over the click so they can train internal time: choose
 
 ## Requirements & Constraints
 
-- **Click on beats:** one toggle per beat of the current meter, any combination, plus an `All` action. Every beat may be off (user decision 2026-11-02, overrides FR8 and UX-DR16); the chip then reads `No beats`.
+- **Click on beats:** one toggle per beat of the current meter, any combination, plus an `All` action. Every beat may be off; the chip then reads `No beats`.
 - **Accent rule:** the beat-1 (accent) variant plays only when beat 1 is enabled. All other enabled beats use the normal variant.
 - **Between beats:** `None` / `8ths` / `16ths` / `Triplets`. These clicks sound only inside enabled beats and use the normal variant at a softer gain. The choice is independent of the visible grid, and the division is relative to the beat in both /4 and /8 meters. Default is `None`.
 - **Loudness order:** beat 1 > other beats > between-beat clicks.

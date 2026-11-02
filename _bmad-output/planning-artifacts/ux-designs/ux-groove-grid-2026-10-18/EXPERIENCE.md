@@ -97,7 +97,7 @@ Behavioral. Visual specs in `DESIGN.md` Components (same names and groups).
 | `meter-preset` | Meter sheet: one tap sets beats per bar and denominator together (`6/8` → 6, `/8`). Editing the stepper or denominator highlights the matching preset, or none. Meter change while playing applies at the next downbeat (see `grid-circle`); a tempo change made before that downbeat switches together with the meter (architecture AD-6). |
 | `number-stepper` | Meter sheet: beats per bar, 1–16 [ASSUMPTION: 16 caps "any meter" at a range a circle can still show legibly]. Hold auto-repeats like the tempo stepper. |
 | `segmented-control` | Single choice, applies live. As the meter denominator (`4` / `8`, visible label `Beat unit`): changes the meter label (`7/8`); beats stay equal, accent on beat 1, no compound grouping (SPEC). BPM counts the beat unit (the denominator note) [ASSUMPTION: keeps one tempo model]. Also used for `Between beats`, `Click sound`, `Marker sound`. |
-| `beat-toggle` | Click sheet main view ([mock](mockups/key-click-sheet.html)), one per beat of the current meter. Tap toggles click on that beat; applies on the next beat while playing. Last enabled beat cannot be turned off. See Click on beats. |
+| `beat-toggle` | Click sheet main view ([mock](mockups/key-click-sheet.html)), one per beat of the current meter. Tap toggles click on that beat; applies on the next beat while playing. Every beat may be off. See Click on beats. |
 
 ### Notices & system
 
@@ -135,12 +135,12 @@ Behavioral. Visual specs in `DESIGN.md` Components (same names and groups).
 | Rule | Behavior |
 |---|---|
 | Toggles | One `beat-toggle` per beat (1…n), any combination. `All` turns every beat on. No preset segments (memlog). |
-| Last beat | The last enabled beat cannot be turned off: its toggle is `aria-disabled` and a caption under the row reads `Use Mute for silence.` (memlog). |
+| No beats | Every beat may be turned off: the bar plays silently while the dot keeps sweeping (user decision 2026-11-02, replaces the last-enabled-beat rule). Mute stays the one-tap way to silence the click and keep the pattern. |
 | Between beats | Between-beat clicks sound only inside enabled beats (memlog). |
 | Accent | Beat-1 variant only when beat 1 is on (memlog); otherwise all enabled beats use the normal variant. |
 | Meter change | Toggles for beats that still exist are kept. When the meter gains beats, new beats are on if every previous beat was on; otherwise off [ASSUMPTION: replaces the old "named preset re-applies" rule now that presets are gone; keeps `Every beat` intact across meters]. |
 | While playing | Changes apply on the next beat (memlog). |
-| Chip label | All on → `Every beat`; only beat 1 → `Beat 1 only`; a single other beat → `Beat n only` (`Beat 3 only`); two or three beats on → the list (`2 & 4`, `1 & 3`, `1, 2 & 4`); more than three but not all → `n of m beats` (`5 of 7 beats`) [ASSUMPTION: replaces `Custom`, which no longer exists in the UI]. Between beats is not shown on the chip, only in its accessible name. |
+| Chip label | All on → `Every beat`; none on → `No beats`; only beat 1 → `Beat 1 only`; a single other beat → `Beat n only` (`Beat 3 only`); two or three beats on → the list (`2 & 4`, `1 & 3`, `1, 2 & 4`); more than three but not all → `n of m beats` (`5 of 7 beats`) [ASSUMPTION: replaces `Custom`, which no longer exists in the UI]. Between beats is not shown on the chip, only in its accessible name. |
 
 ### Sound rules
 
@@ -239,7 +239,7 @@ Behavioral. Contrast values live in `DESIGN.md` Colors.
 | Segmented controls | `radiogroup` | `Between beats`, `Click sound`, `Marker sound`, `Beat unit` (visible label matches); options by name | Name + checked state (`Woodblock, selected`); previews are not announced |
 | Meter presets | `radiogroup` | `Common meters`; none checked when the meter is not listed | Name + checked state |
 | `All` | `button` | `Click on all beats` | — |
-| Beat toggles | toggle `button`, `aria-pressed` | `Click on beat 3`; the last enabled one is `aria-disabled` with description `Use Mute for silence.` | State |
+| Beat toggles | toggle `button`, `aria-pressed` | `Click on beat 3` | State |
 | Sounds row | `button` | `Sounds: Woodblock, Cowbell markers` | When activated, it announces the `Sounds` level |
 | `sheet-back` | `button` | `Back to Click` | — |
 | Hints, `undo-notice` | polite live region | `3 markers removed. Undo available.`; Undo is a real button, reachable by Tab | Focus is not moved to Undo automatically |

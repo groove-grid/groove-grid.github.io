@@ -29,7 +29,7 @@ FR4: Meter sheet offers one-tap common meters (2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 12/
 FR5: A smooth dot traverses the bar exactly in tempo and loops continuously; at rest (stopped) it sits on beat 1 (CAP-2).
 FR6: A metronome click plays in sync with the dot; beat 1 is higher in pitch (CAP-3).
 FR7: Musician selects the click sound from Beep, Woodblock, Stick, Hi-hat, each with a beat-1 variant; selecting while stopped previews both variants 300 ms apart (CAP-3).
-FR8: Musician chooses which beats click via one toggle per beat (any combination) plus an `All` action; at least one beat must stay enabled (CAP-4).
+FR8: Musician chooses which beats click via one toggle per beat (any combination) plus an `All` action; every beat may be off (CAP-4).
 FR9: Optional between-beats click (None, 8ths, 16ths, Triplets) sounds only within enabled beats, quieter than beat clicks (CAP-4).
 FR10: Mute silences the click only, instantly; dot, glow, crossing, pulse and marker sounds continue; unmute resumes the click in phase (CAP-4).
 FR11: Tempo is 30–250 BPM (integers), always visibly displayed in every state; changing it changes dot and click rate (CAP-5).
@@ -102,7 +102,7 @@ UX-DR12: `top-bar` with `chip-caption` + `picker-chip` for METER / GRID / CLICK 
 UX-DR13: `picker-sheet` (<768px): bottom sheet, scrim 0.32, close on scrim tap/swipe-down/Esc, focus trap and focus return, live-apply, reopens at main view; Grid sheet also closes on selection. `picker-popover` (≥768px): 360px, shadow, anchored under chip, one open at a time.
 UX-DR14: Meter sheet: `meter-preset` pills (max 4 per row, highlight matches current meter or none), `Other` section with `number-stepper` (1–16) and `segmented-control` Beat unit 4/8.
 UX-DR15: Grid sheet: single-choice finest level (`Beats`, `8ths`, `16ths`, `Triplets`) + divider + `Clear all markers` action row (disabled when no markers; closes sheet; shows undo-notice).
-UX-DR16: Click sheet main view: `Click on beats` header with `text-action` `All`, `beat-toggle` row (44px, max 7 per row, balanced wrapping up to 3 rows, last-on toggle aria-disabled with `Use Mute for silence.` caption), `Between beats` segmented control, `Sounds ›` `sheet-nav-row` with live summary; Sounds second level with `sheet-back`, Click sound and Marker sound segmented controls.
+UX-DR16: Click sheet main view: `Click on beats` header with `text-action` `All`, `beat-toggle` row (44px, max 7 per row, balanced wrapping up to 3 rows), `Between beats` segmented control, `Sounds ›` `sheet-nav-row` with live summary; Sounds second level with `sheet-back`, Click sound and Marker sound segmented controls.
 UX-DR17: Click-on-beats meter-change carry-over rule (kept toggles; new beats on iff all previous were on) and accent rule (beat-1 variant only when beat 1 is enabled).
 UX-DR18: `undo-notice` (`n markers removed.` + 48px `Undo`) and `hint-text` rendered in the reserved notice line under the circle in caption style; derived single `notice` with fixed priority.
 UX-DR19: `rotate-overlay` (`Turn your phone upright.`) for landscape viewport under 560px tall; playback unaffected.
@@ -462,9 +462,9 @@ So that I can train with less support, like 2 & 4 or beat 1 only.
 **When** I tap it
 **Then** the Click sheet main view opens with a `Click on beats` header, an `All` text action and one 44px `beat-toggle` per beat of the current meter, wrapping at 7 per row (balanced, up to 3 rows) (UX-DR16, FR8)
 **And** tapping a toggle enables or disables clicks on that beat, and while playing it applies on the next beat
-**And** the last enabled beat cannot be turned off: it is `aria-disabled` with the caption `Use Mute for silence.`
+**And** every beat can be turned off; the bar then plays silently while the dot keeps sweeping
 **And** `All` turns every beat on and is disabled when all are on
-**And** the chip label follows the rule: `Every beat`, `Beat 1 only`, `Beat n only`, a list like `2 & 4` for two or three beats, `n of m beats` otherwise (UX-DR12)
+**And** the chip label follows the rule: `Every beat`, `No beats`, `Beat 1 only`, `Beat n only`, a list like `2 & 4` for two or three beats, `n of m beats` otherwise (UX-DR12)
 **And** the beat-1 variant sounds only when beat 1 is enabled, and otherwise all enabled beats use the normal variant (UX-DR17)
 **And** click events exist only for enabled beats, and a click sheet change never cancels already-scheduled nodes (AD-6, AD-7)
 
@@ -724,7 +724,7 @@ So that I can use the practice screen with confidence.
 **Given** a screen reader
 **When** I traverse the screen
 **Then** roles and names match the EXPERIENCE table: the canvas is an `img` labeled like `Grid: 4/4, 16ths, 3 markers: 1, and of 2, a of 3`, the BPM numeral is a `spinbutton` (min 30, max 250) announced politely after 500 ms of no change, chips read like `Click: Beep, 1 & 3, between beats none`, and segmented controls and presets are `radiogroup`s (UX-DR20, NFR9)
-**And** beat toggles have `aria-pressed` and `Click on beat 3`, with the last one `aria-disabled` and described by `Use Mute for silence.`
+**And** beat toggles have `aria-pressed` and `Click on beat 3`
 **And** beats are never announced
 **And** every control meets the 48px target (beat toggles 44px) and shows the 2px ink `:focus-visible` ring only for keyboard focus
 **And** markers differ from lines by shape, and mute differs by fill and glyph, not color

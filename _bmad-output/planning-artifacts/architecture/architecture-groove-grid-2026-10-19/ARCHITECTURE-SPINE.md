@@ -78,7 +78,7 @@ graph TD
     beats: number                          // 1–16
     beatUnit: 4 | 8
     grid: Division                         // finest visible level
-    clickBeats: boolean[]                  // length === beats, at least one true
+    clickBeats: boolean[]                  // length === beats, all false allowed
     betweenBeats: Division                 // 1 = None
     clickSound: ClickSoundId
     markerSound: MarkerSoundId | null      // null = Off
