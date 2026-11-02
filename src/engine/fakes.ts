@@ -7,16 +7,24 @@ export interface PlayedSound {
   bus: Bus
 }
 
-export function createFakeOut(): AudioOut & { played: PlayedSound[]; cancelled: number } {
+export function createFakeOut(): AudioOut & {
+  played: PlayedSound[]
+  cancelled: number
+  clickMuted: boolean
+} {
   const fake = {
     played: [] as PlayedSound[],
     cancelled: 0,
+    clickMuted: false,
     play(sampleId: string, time: number, gain: number, bus: Bus) {
       fake.played.push({ sampleId, time, gain, bus })
     },
     cancelAll() {
       fake.cancelled++
       fake.played.length = 0
+    },
+    setClickMuted(muted: boolean) {
+      fake.clickMuted = muted
     },
   }
   return fake

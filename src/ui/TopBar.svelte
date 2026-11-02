@@ -57,6 +57,26 @@
       onclick={() => (clickOpen = !clickOpen)}>{clickLabel(settings.clickBeats)}</button
     >
   </div>
+  <button
+    type="button"
+    class="mute"
+    aria-label="Mute click"
+    aria-pressed={settings.muted}
+    onclick={() => settingsStore.toggleMuted()}
+  >
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+      <path
+        d={settings.muted
+          ? 'M16 9.5l5 5M21 9.5l-5 5'
+          : 'M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12'}
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+    </svg>
+  </button>
 </div>
 
 {#if meterOpen && meterChip}
@@ -128,6 +148,9 @@
   .chip {
     height: var(--target-min);
     box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 0 var(--chip-padding-x);
     border: 1px solid var(--border-hairline);
     border-radius: var(--radius-full);
@@ -149,7 +172,38 @@
     border: 1.5px solid var(--ink);
   }
 
-  .chip:focus-visible {
+  .mute {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--target-min);
+    height: var(--target-min);
+    margin-left: auto;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--ink);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .mute:active {
+    background: var(--surface-pressed);
+  }
+
+  .mute[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--surface-raised);
+  }
+
+  .mute[aria-pressed='true']:active {
+    opacity: 0.85;
+  }
+
+  .chip:focus-visible,
+  .mute:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 2px;
   }

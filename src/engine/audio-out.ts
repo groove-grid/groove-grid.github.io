@@ -3,6 +3,9 @@ import type { SampleBank } from './sample-bank.ts'
 
 const BUSES: readonly Bus[] = ['click', 'marker', 'preview']
 
+/** Seconds; the gain is about 96% of the way there after 5 ms, so a cut click does not pop. */
+const MUTE_TIME_CONSTANT = 0.0015
+
 /** Web Audio implementation of `AudioOut` (AD-7). */
 export function createAudioOut(ctx: AudioContext, bank: SampleBank): AudioOut {
   const buses = new Map<Bus, GainNode>()
@@ -42,6 +45,9 @@ export function createAudioOut(ctx: AudioContext, bank: SampleBank): AudioOut {
         source.disconnect()
       }
       live.clear()
+    },
+    setClickMuted(muted) {
+      buses.get('click')?.gain.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, MUTE_TIME_CONSTANT)
     },
   }
 }

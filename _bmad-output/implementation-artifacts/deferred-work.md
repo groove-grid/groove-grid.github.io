@@ -67,3 +67,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-2-between-beats-click.md`
   summary: Idea, not planned: turn individual sub-beats on or off for the click (user question, 2026-11-02). Try Epic 4 markers with a marker sound first, since they already allow custom sub-beat patterns; a real version would go through `bmad-correct-course`.
   evidence: `betweenBeats` is one division for the whole bar. Markers differ: separate sound, not muted, tied to the visible grid. Per-sub-beat toggles need a new settings shape and a much denser Click sheet (16ths in 4/4 is 16 toggles).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-3-mute-and-unmute-in-phase.md`
+  summary: The mute button's name, `aria-pressed` and glyph swap have no automated test, and nothing yet proves a preview plays while muted.
+  evidence: The repo has no DOM test runner and the preview path arrives in story 3.4, whose AC should assert `play` routes to the preview bus and audibility while muted.

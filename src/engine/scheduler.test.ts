@@ -413,6 +413,88 @@ describe('scheduler', () => {
       expect(out.cancelled).toBe(0)
     })
 
+    it('mutes at once and keeps scheduling every level at unchanged times and gains', async () => {
+      const subdivided = { ...DEFAULT_SETTINGS, betweenBeats: 2 as const }
+      const heard = setup()
+      const silent = setup()
+      await heard.scheduler.start(subdivided)
+      await silent.scheduler.start(subdivided)
+      heard.run(spb(80))
+      silent.run(spb(80))
+      silent.scheduler.apply({ ...subdivided, muted: true })
+      expect(silent.out.clickMuted).toBe(true)
+      expect(silent.scheduler.pending).toBeNull()
+      expect(silent.scheduler.timeline!.segments).toHaveLength(1)
+      heard.run(spb(80) * 4)
+      silent.run(spb(80) * 4)
+      expect(silent.out.played).toEqual(heard.out.played)
+      expect(silent.out.played.every((p) => p.bus === 'click')).toBe(true)
+      expect(new Set(silent.out.played.map((p) => p.gain)).size).toBe(3)
+
+      silent.scheduler.apply({ ...subdivided, muted: false })
+      expect(silent.out.clickMuted).toBe(false)
+      heard.run(spb(80) * 2)
+      silent.run(spb(80) * 2)
+      expect(silent.out.played).toEqual(heard.out.played)
+      expect(silent.out.cancelled).toBe(0)
+    })
+
+    it('mutes while stopped and keeps the state across Stop and Start', async () => {
+      const { scheduler, out, run } = setup()
+      const muted = { ...DEFAULT_SETTINGS, muted: true }
+      scheduler.apply(muted)
+      expect(out.clickMuted).toBe(true)
+      await scheduler.start(muted)
+      expect(out.clickMuted).toBe(true)
+      run(spb(80))
+      expect(out.played.length).toBeGreaterThan(0)
+      scheduler.stop()
+      out.clickMuted = false
+      await scheduler.start(muted)
+      expect(out.clickMuted).toBe(true)
+    })
+
+    it('leaves the bus alone when other settings change while playing', async () => {
+      const { scheduler, out } = setup()
+      await scheduler.start(at(80))
+      const setClickMuted = vi.spyOn(out, 'setClickMuted')
+      scheduler.apply(at(120))
+      expect(setClickMuted).not.toHaveBeenCalled()
+    })
+
+    it('keeps a pending tempo change on its boundary when mute is tapped', async () => {
+      const { scheduler, run } = setup()
+      await scheduler.start(at(80))
+      run(spb(80) / 2)
+      scheduler.apply(at(120))
+      const { atTime } = scheduler.pending!
+      scheduler.apply({ ...at(120), muted: true })
+      expect(scheduler.pending!.atTime).toBe(atTime)
+    })
+
+    it('starts unmuted when unmuted during a system pause', async () => {
+      const { scheduler, out, system } = setup()
+      const muted = { ...DEFAULT_SETTINGS, muted: true }
+      scheduler.apply(muted)
+      await scheduler.start(muted)
+      system('hidden')
+      scheduler.apply(DEFAULT_SETTINGS)
+      await scheduler.start(DEFAULT_SETTINGS)
+      expect(out.clickMuted).toBe(false)
+    })
+
+    it('reapplies mute to the output rebuilt after a system pause', async () => {
+      const { scheduler, out, order, system } = setup()
+      const muted = { ...DEFAULT_SETTINGS, muted: true }
+      scheduler.apply(muted)
+      await scheduler.start(muted)
+      system('hidden')
+      out.clickMuted = false // a rebuilt output starts unmuted
+      await scheduler.start(muted)
+      expect(order.filter((step) => step === 'recreate')).toHaveLength(1)
+      expect(out.clickMuted).toBe(true)
+    })
+
     it('applies immediately while stopped, with no pending', async () => {
       const { scheduler, out, run } = setup()
       scheduler.apply(at(120))

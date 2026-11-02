@@ -32,6 +32,12 @@ const engine = createScheduler({
   out: {
     play: (...args) => void out.then((o) => o.play(...args)),
     cancelAll: () => void out.then((o) => o.cancelAll()),
+    // Mute can be tapped after a failed bank load; Start reapplies it to the rebuilt output.
+    setClickMuted: (muted) =>
+      void out.then(
+        (o) => o.setClickMuted(muted),
+        () => {},
+      ),
   },
   wakeup: spikeParams.enabled
     ? probeWakeup(baseWakeup, wakeGaps, () => performance.now())

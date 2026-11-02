@@ -61,6 +61,9 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
     setBetweenBeats(betweenBeats: Division): void {
       commit({ ...current, betweenBeats })
     },
+    toggleMuted(): void {
+      commit({ ...current, muted: !current.muted })
+    },
     /** Steps tempo by `delta`; returns whether another step in that direction is possible. */
     stepTempo(delta: number): boolean {
       this.setTempo(current.bpm + delta)

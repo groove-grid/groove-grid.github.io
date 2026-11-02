@@ -9,6 +9,8 @@ export interface AudioOut {
   play(sampleId: string, time: number, gain: number, bus: Bus): void
   /** Stops every node handed out and not yet finished. */
   cancelAll(): void
+  /** Silences the click bus at once; scheduled nodes keep running. Other buses are never muted. */
+  setClickMuted(muted: boolean): void
 }
 
 /** Fires `onWake` roughly every `WAKEUP_INTERVAL` until stopped. */

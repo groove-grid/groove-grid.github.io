@@ -172,6 +172,23 @@ describe('settings store', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
+  it('toggles mute, notifies, and leaves the click pattern alone', () => {
+    const store = createSettingsStore()
+    const listener = vi.fn()
+    store.subscribe(listener)
+    store.toggleClickBeat(1)
+    store.setBetweenBeats(2)
+    listener.mockClear()
+    const { clickBeats, betweenBeats } = store.current
+    store.toggleMuted()
+    expect(store.current.muted).toBe(true)
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(store.current.clickBeats).toEqual(clickBeats)
+    expect(store.current.betweenBeats).toBe(betweenBeats)
+    store.toggleMuted()
+    expect(store.current.muted).toBe(false)
+  })
+
   it('turns every beat on with All', () => {
     const store = createSettingsStore()
     store.toggleClickBeat(0)

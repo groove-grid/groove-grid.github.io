@@ -161,6 +161,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       return () => listeners.delete(listener)
     },
     apply(next) {
+      if (next.muted !== settings.muted) out.setClickMuted(next.muted)
       settings = next
       if (!state) return
       state = {
@@ -193,6 +194,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           return
         }
       }
+      // A rebuilt output starts unmuted; this also survives Stop and Start.
+      out.setClickMuted(next.muted)
       const resumed = resumeWithTimeout()
       resumed.catch(() => {})
       try {
