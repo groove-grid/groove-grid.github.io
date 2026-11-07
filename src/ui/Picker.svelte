@@ -33,6 +33,8 @@
 
   function onkeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
+      // Content handles Esc first (a second level goes back) and marks it handled.
+      if (event.defaultPrevented) return
       event.preventDefault()
       close()
     } else if (event.key === 'Tab') {

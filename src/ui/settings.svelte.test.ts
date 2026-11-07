@@ -20,6 +20,20 @@ describe('settings store', () => {
     expect(store.current.betweenBeats).toBe(4)
   })
 
+  it('defaults the click sound to Beep and sets it through normalize', () => {
+    const store = createSettingsStore()
+    expect(store.current.clickSound).toBe('beep')
+    const listener = vi.fn()
+    store.subscribe(listener)
+    store.setClickSound('woodblock')
+    expect(store.current.clickSound).toBe('woodblock')
+    expect(listener).toHaveBeenCalledTimes(1)
+    store.setClickSound('woodblock')
+    expect(listener).toHaveBeenCalledTimes(1)
+    store.setClickSound('gong' as never)
+    expect(store.current.clickSound).toBe('beep')
+  })
+
   it('starts at the default 80 BPM', () => {
     expect(createSettingsStore().current.bpm).toBe(80)
   })

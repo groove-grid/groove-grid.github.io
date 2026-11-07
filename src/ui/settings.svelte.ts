@@ -1,4 +1,4 @@
-import { BPM_MAX, BPM_MIN } from '../core/constants.ts'
+import { BPM_MAX, BPM_MIN, type ClickSoundId } from '../core/constants.ts'
 import { DEFAULT_SETTINGS, normalize, type Division, type Settings } from '../core/settings.ts'
 
 /** Kept toggles stay; new beats are on only if every previous beat was on. */
@@ -60,6 +60,9 @@ export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS) {
     },
     setBetweenBeats(betweenBeats: Division): void {
       commit({ ...current, betweenBeats })
+    },
+    setClickSound(clickSound: ClickSoundId): void {
+      commit({ ...current, clickSound })
     },
     toggleMuted(): void {
       commit({ ...current, muted: !current.muted })

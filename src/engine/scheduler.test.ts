@@ -413,6 +413,34 @@ describe('scheduler', () => {
       expect(out.cancelled).toBe(0)
     })
 
+    it('takes the click sound from the segment each click falls in, from the next beat', async () => {
+      // 16ths, so clicks handed out after the change can still fall before the beat boundary.
+      const sixteenths = { ...DEFAULT_SETTINGS, betweenBeats: 4 as const }
+      const { scheduler, out, run } = setup()
+      await scheduler.start(sixteenths)
+      run(spb(80) * 1.3)
+      const scheduled = out.played.length
+      scheduler.apply({ ...sixteenths, clickSound: 'woodblock' })
+      scheduler.apply({ ...sixteenths, clickSound: 'hi-hat' })
+      expect(scheduler.pending!.changed).toEqual(['clickSound'])
+      expect(scheduler.timeline!.segments).toHaveLength(2)
+      run(spb(80) * 8)
+      const boundary = scheduler.timeline!.segments[1]!.startTime
+      const before = out.played.filter((p) => p.time < boundary - 1e-9)
+      const after = out.played.filter((p) => p.time >= boundary - 1e-9)
+      // Some clicks before the boundary were handed out after the change and keep the old sound.
+      expect(before.length).toBeGreaterThan(scheduled)
+      expect(before.every((p) => p.sampleId.startsWith('click-beep-'))).toBe(true)
+      expect(after.length).toBeGreaterThan(4 * 4)
+      expect(after.every((p) => p.sampleId.startsWith('click-hi-hat-'))).toBe(true)
+      expect(after.some((p) => p.sampleId === 'click-hi-hat-accent')).toBe(true)
+      out.played.forEach((p, n) => {
+        expect(p.time).toBeCloseTo(10 + START_LEAD + n * (spb(80) / 4), 9)
+      })
+      expect(scheduler.skipped).toBe(0)
+      expect(out.cancelled).toBe(0)
+    })
+
     it('mutes at once and keeps scheduling every level at unchanged times and gains', async () => {
       const subdivided = { ...DEFAULT_SETTINGS, betweenBeats: 2 as const }
       const heard = setup()
@@ -502,6 +530,139 @@ describe('scheduler', () => {
       await scheduler.start(at(120))
       run(spb(120) * 2)
       expect(out.played[1]!.time - out.played[0]!.time).toBeCloseTo(spb(120), 9)
+    })
+  })
+
+  describe('preview', () => {
+    const previews = (out: ReturnType<typeof createFakeOut>) =>
+      out.played.filter((p) => p.bus === 'preview')
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+    it('resumes synchronously, then plays accent then normal 300 ms apart on the preview bus', async () => {
+      const { scheduler, resume, out, clock } = setup()
+      scheduler.preview('stick')
+      expect(resume).toHaveBeenCalledTimes(1)
+      await settle()
+      expect(out.played).toEqual([
+        { sampleId: 'click-stick-accent', time: clock.now(), gain: 1, bus: 'preview' },
+        { sampleId: 'click-stick-normal', time: clock.now() + 0.3, gain: 0.7, bus: 'preview' },
+      ])
+    })
+
+    it('plays while muted', async () => {
+      const { scheduler, out } = setup()
+      scheduler.apply({ ...DEFAULT_SETTINGS, muted: true })
+      scheduler.preview('woodblock')
+      await settle()
+      expect(out.clickMuted).toBe(true)
+      expect(previews(out).map((p) => p.sampleId)).toEqual([
+        'click-woodblock-accent',
+        'click-woodblock-normal',
+      ])
+    })
+
+    it('waits for the sample bank, and only the latest of several previews plays', async () => {
+      let release!: () => void
+      const ready = new Promise<void>((resolve) => (release = resolve))
+      const { scheduler, out } = setup({ ready })
+      scheduler.preview('stick')
+      scheduler.preview('hi-hat')
+      await settle()
+      expect(out.played).toEqual([])
+      release()
+      await settle()
+      expect(previews(out).map((p) => p.sampleId)).toEqual([
+        'click-hi-hat-accent',
+        'click-hi-hat-normal',
+      ])
+    })
+
+    it('swallows a failed bank or resume', async () => {
+      const failedBank = setup({ ready: Promise.reject(new Error('decode')) })
+      expect(() => failedBank.scheduler.preview('stick')).not.toThrow()
+      const failedResume = setup({ resume: () => Promise.reject(new Error('locked')) })
+      expect(() => failedResume.scheduler.preview('stick')).not.toThrow()
+      await settle()
+      expect(failedBank.out.played).toEqual([])
+      expect(failedResume.out.played).toEqual([])
+    })
+
+    it('does nothing while playing', async () => {
+      const { scheduler, resume, out, run } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      resume.mockClear()
+      scheduler.preview('hi-hat')
+      await settle()
+      run(secondsPerBeat)
+      expect(resume).not.toHaveBeenCalled()
+      expect(previews(out)).toEqual([])
+    })
+
+    it('does nothing while paused by the system', async () => {
+      const { scheduler, resume, out, system } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      system('hidden')
+      expect(scheduler.status).toBe('paused-by-system')
+      resume.mockClear()
+      scheduler.preview('stick')
+      await settle()
+      expect(resume).not.toHaveBeenCalled()
+      expect(previews(out)).toEqual([])
+    })
+
+    it('a new preview cancels the last one, so its normal note does not overlap', async () => {
+      const { scheduler, out } = setup()
+      scheduler.preview('stick')
+      await settle()
+      scheduler.preview('hi-hat')
+      await settle()
+      expect(out.cancelled).toBe(1)
+      expect(out.played.map((p) => p.sampleId)).toEqual([
+        'click-hi-hat-accent',
+        'click-hi-hat-normal',
+      ])
+    })
+
+    it('Start cancels a preview still sounding before the first click', async () => {
+      const { scheduler, out, run } = setup()
+      scheduler.preview('stick')
+      await settle()
+      await scheduler.start(DEFAULT_SETTINGS)
+      expect(out.cancelled).toBe(1)
+      run(WAKEUP_INTERVAL)
+      expect(previews(out)).toEqual([])
+      expect(out.played[0]!.sampleId).toBe('click-beep-accent')
+    })
+
+    it('rebuilds audio broken by a system pause before previewing', async () => {
+      const { scheduler, out, recreate, order, system } = setup()
+      await scheduler.start(DEFAULT_SETTINGS)
+      system('interrupted')
+      scheduler.stop()
+      order.length = 0
+      scheduler.preview('woodblock')
+      expect(recreate).toHaveBeenCalledTimes(1)
+      expect(order).toEqual(['recreate', 'resume'])
+      await settle()
+      expect(previews(out).map((p) => p.sampleId)).toEqual([
+        'click-woodblock-accent',
+        'click-woodblock-normal',
+      ])
+      // Already rebuilt, so the next Start does not rebuild again.
+      await scheduler.start(DEFAULT_SETTINGS)
+      expect(recreate).toHaveBeenCalledTimes(1)
+    })
+
+    it('drops a preview still waiting when Start begins', async () => {
+      let release!: () => void
+      const ready = new Promise<void>((resolve) => (release = resolve))
+      const { scheduler, out } = setup({ ready })
+      scheduler.preview('stick')
+      const started = scheduler.start(DEFAULT_SETTINGS)
+      release()
+      await started
+      await settle()
+      expect(previews(out)).toEqual([])
     })
   })
 })

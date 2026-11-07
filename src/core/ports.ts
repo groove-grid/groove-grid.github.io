@@ -1,7 +1,8 @@
+import type { ClickSoundId } from './constants.ts'
 import type { Settings } from './settings.ts'
 import type { Timeline } from './timeline.ts'
 
-/** Output buses (AD-7). Only `click` is used until markers and previews arrive. */
+/** Output buses (AD-7). `marker` is unused until markers arrive. */
 export type Bus = 'click' | 'marker' | 'preview'
 
 export interface AudioOut {
@@ -35,6 +36,11 @@ export interface EnginePort {
   start(settings: Settings): Promise<void>
   stop(): void
   apply(settings: Settings): void
+  /**
+   * Plays the accent then the normal variant of `sound`, 300 ms apart, on the never-muted preview
+   * bus. Only while stopped; calls `resume()` synchronously, so it must run inside the user gesture.
+   */
+  preview(sound: ClickSoundId): void
   readonly status: EngineStatus
   readonly pausedReason: PausedReason | null
   /** False where `navigator.audioSession` is missing. */

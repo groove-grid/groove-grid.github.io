@@ -1,3 +1,4 @@
+import type { ClickSoundId, MarkerSoundId } from '../core/constants.ts'
 import type { Division, Settings } from '../core/settings.ts'
 
 const GRID_LABELS: Record<Division, string> = { 1: 'Beats', 2: '8ths', 4: '16ths', 3: 'Triplets' }
@@ -24,10 +25,50 @@ export function betweenBeatsLabel(betweenBeats: Division): string {
   return betweenBeats === 1 ? 'None' : GRID_LABELS[betweenBeats]
 }
 
-/** The chip shows only the beats; the between-beats setting is in its accessible name. */
-export function clickChipName(clickBeats: readonly boolean[], betweenBeats: Division): string {
+const CLICK_SOUND_LABELS: Record<ClickSoundId, string> = {
+  beep: 'Beep',
+  woodblock: 'Woodblock',
+  stick: 'Stick',
+  'hi-hat': 'Hi-hat',
+}
+
+const MARKER_SOUND_LABELS: Record<MarkerSoundId, string> = {
+  clap: 'Clap',
+  cowbell: 'Cowbell',
+  conga: 'Conga',
+}
+
+export function clickSoundLabel(sound: ClickSoundId): string {
+  return CLICK_SOUND_LABELS[sound]
+}
+
+export function markerSoundLabel(sound: MarkerSoundId): string {
+  return MARKER_SOUND_LABELS[sound]
+}
+
+/** The Sounds row summary: `Beep · markers off`, `Woodblock · Cowbell markers`. */
+export function soundsSummary(
+  clickSound: ClickSoundId,
+  markerSound: MarkerSoundId | null,
+  separator = ' · ',
+): string {
+  const markers = markerSound ? `${markerSoundLabel(markerSound)} markers` : 'markers off'
+  return `${clickSoundLabel(clickSound)}${separator}${markers}`
+}
+
+/** Accessible name of the Sounds row: `Sounds: Woodblock, Cowbell markers`. */
+export function soundsRowName(clickSound: ClickSoundId, markerSound: MarkerSoundId | null): string {
+  return `Sounds: ${soundsSummary(clickSound, markerSound, ', ')}`
+}
+
+/** The chip shows only the beats; the sound and between-beats setting are in its accessible name. */
+export function clickChipName(
+  clickSound: ClickSoundId,
+  clickBeats: readonly boolean[],
+  betweenBeats: Division,
+): string {
   const between = betweenBeatsLabel(betweenBeats).toLowerCase()
-  return `Click, ${clickLabel(clickBeats)}, between beats ${between}`
+  return `Click, ${clickSoundLabel(clickSound)}, ${clickLabel(clickBeats)}, between beats ${between}`
 }
 
 const BEAT_TOGGLES_PER_ROW = 7

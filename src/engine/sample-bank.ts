@@ -1,10 +1,13 @@
 import type { ClickLevel } from '../core/timeline.ts'
-import type { ClickSoundId } from '../core/constants.ts'
+import { CLICK_SOUND_IDS, type ClickSoundId } from '../core/constants.ts'
 
 export type SampleBank = ReadonlyMap<string, AudioBuffer>
 
-/** Placeholder bank: the `beep` accent and normal variants (AD-11). */
-export const BANK_IDS = ['click-beep-accent', 'click-beep-normal'] as const
+/** Accent and normal variant of every click sound (AD-11). */
+export const BANK_IDS: readonly string[] = CLICK_SOUND_IDS.flatMap((sound) => [
+  clickSampleId(sound, 'accent'),
+  clickSampleId(sound, 'beat'),
+])
 
 /** One URL builder for every sample, derived from the deploy base path. */
 export function sampleUrl(id: string, base: string = import.meta.env.BASE_URL): string {

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import { CLICK_SOUND_IDS } from '../core/constants.ts'
 import {
   beatToggleRows,
   betweenBeatsLabel,
   clickChipName,
   clickLabel,
+  clickSoundLabel,
   gridChipLabel,
   meterLabel,
+  soundsRowName,
+  soundsSummary,
 } from './chip-labels.ts'
 
 describe('chip labels', () => {
@@ -68,10 +72,29 @@ describe('between beats labels', () => {
 
   it('adds the between-beats setting to the accessible name only', () => {
     const beats = [true, false, true, false]
-    expect(clickChipName(beats, 1)).toBe('Click, 1 & 3, between beats none')
-    expect(clickChipName(beats, 2)).toBe('Click, 1 & 3, between beats 8ths')
-    expect(clickChipName(beats, 4)).toBe('Click, 1 & 3, between beats 16ths')
-    expect(clickChipName(beats, 3)).toBe('Click, 1 & 3, between beats triplets')
+    expect(clickChipName('beep', beats, 1)).toBe('Click, Beep, 1 & 3, between beats none')
+    expect(clickChipName('beep', beats, 2)).toBe('Click, Beep, 1 & 3, between beats 8ths')
+    expect(clickChipName('beep', beats, 4)).toBe('Click, Beep, 1 & 3, between beats 16ths')
+    expect(clickChipName('beep', beats, 3)).toBe('Click, Beep, 1 & 3, between beats triplets')
     expect(clickLabel(beats)).toBe('1 & 3')
+  })
+})
+
+describe('sound labels', () => {
+  it('names every click sound', () => {
+    expect(CLICK_SOUND_IDS.map(clickSoundLabel)).toEqual(['Beep', 'Woodblock', 'Stick', 'Hi-hat'])
+  })
+
+  it('summarizes the Sounds level', () => {
+    expect(soundsSummary('beep', null)).toBe('Beep · markers off')
+    expect(soundsSummary('woodblock', 'cowbell')).toBe('Woodblock · Cowbell markers')
+    expect(soundsRowName('beep', null)).toBe('Sounds: Beep, markers off')
+    expect(soundsRowName('woodblock', 'cowbell')).toBe('Sounds: Woodblock, Cowbell markers')
+  })
+
+  it('puts the sound in the chip name', () => {
+    expect(clickChipName('hi-hat', [true, true, true, true], 2)).toBe(
+      'Click, Hi-hat, Every beat, between beats 8ths',
+    )
   })
 })

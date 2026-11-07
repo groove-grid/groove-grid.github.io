@@ -76,7 +76,7 @@
 <main>
   <div class="column">
     <h1 class="sr-only">Groove Grid</h1>
-    <TopBar settings={settingsStore.current} />
+    <TopBar settings={settingsStore.current} preview={(sound) => engine.preview(sound)} />
     <div class="circle">
       <!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
       <canvas bind:this={canvas} role="img" aria-label={gridLabel(settingsStore.current)}></canvas>

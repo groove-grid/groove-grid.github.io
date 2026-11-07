@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ClickSoundId } from '../core/constants.ts'
   import type { Settings } from '../core/settings.ts'
   import { clickChipName, clickLabel, gridChipLabel, meterLabel } from './chip-labels.ts'
   import ClickSheet from './ClickSheet.svelte'
@@ -7,7 +8,8 @@
   import Picker from './Picker.svelte'
   import { settingsStore } from './settings.svelte.ts'
 
-  let { settings }: { settings: Settings } = $props()
+  let { settings, preview }: { settings: Settings; preview: (sound: ClickSoundId) => void } =
+    $props()
 
   let gridChip = $state<HTMLButtonElement>()
   let gridOpen = $state(false)
@@ -51,7 +53,7 @@
       class="chip"
       class:open={clickOpen}
       bind:this={clickChip}
-      aria-label={clickChipName(settings.clickBeats, settings.betweenBeats)}
+      aria-label={clickChipName(settings.clickSound, settings.clickBeats, settings.betweenBeats)}
       aria-haspopup="dialog"
       aria-expanded={clickOpen}
       onclick={() => (clickOpen = !clickOpen)}>{clickLabel(settings.clickBeats)}</button
@@ -112,9 +114,16 @@
     <ClickSheet
       clickBeats={settings.clickBeats}
       betweenBeats={settings.betweenBeats}
+      clickSound={settings.clickSound}
+      markerSound={settings.markerSound}
       ontoggle={(index) => settingsStore.toggleClickBeat(index)}
       onall={() => settingsStore.setAllClickBeats()}
       onbetweenbeats={(division) => settingsStore.setBetweenBeats(division)}
+      onclicksound={(sound) => {
+        settingsStore.setClickSound(sound)
+        // Synchronous, inside the gesture; the engine plays it only while stopped.
+        preview(sound)
+      }}
     />
   </Picker>
 {/if}

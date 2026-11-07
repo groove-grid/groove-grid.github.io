@@ -18,6 +18,30 @@
     ArrowDown: 1,
   }
 
+  /**
+   * If any label would overflow at label size, every label in the control drops to caption size
+   * (DESIGN.md segmented-control). Measured at label size each time, so it can grow back.
+   */
+  function fitLabels(group: HTMLElement): () => void {
+    let disposed = false
+    const fit = () => {
+      if (disposed) return
+      group.classList.remove('compact')
+      const overflows = [...group.querySelectorAll('button')].some(
+        (button) => button.scrollWidth > button.clientWidth,
+      )
+      group.classList.toggle('compact', overflows)
+    }
+    const observer = new ResizeObserver(fit)
+    observer.observe(group)
+    fit()
+    void document.fonts?.ready.then(fit)
+    return () => {
+      disposed = true
+      observer.disconnect()
+    }
+  }
+
   /** Arrows move and select within the group; Tab enters only at the selected segment. */
   function onkeydown(event: KeyboardEvent, index: number): void {
     const offset = OFFSETS[event.key]
@@ -30,7 +54,15 @@
   }
 </script>
 
-<div class="segmented" role="radiogroup" aria-labelledby={labelledby}>
+<div
+  class="segmented"
+  role="radiogroup"
+  aria-labelledby={labelledby}
+  {@attach (group) => {
+    void options
+    return fitLabels(group)
+  }}
+>
   {#each options as option, index (option.value)}
     <button
       type="button"
@@ -74,6 +106,10 @@
     cursor: pointer;
     outline: none;
     touch-action: manipulation;
+  }
+
+  .segmented:global(.compact) .segment {
+    font-size: var(--caption-size);
   }
 
   .segment + .segment {

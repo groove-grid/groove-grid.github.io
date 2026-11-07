@@ -71,3 +71,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-3-mute-and-unmute-in-phase.md`
   summary: The mute button's name, `aria-pressed` and glyph swap have no automated test, and nothing yet proves a preview plays while muted.
   evidence: The repo has no DOM test runner and the preview path arrives in story 3.4, whose AC should assert `play` routes to the preview bus and audibility while muted.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-4-choose-the-click-sound.md`
+  summary: The Sounds level (nav row, focus to `Back to Click` and back, Esc going back without closing), the segmented-control caption fallback and the TopBar preview wiring have no automated test.
+  evidence: No DOM or component test runner in the repo (no jsdom, testing-library or Playwright); only pure label and store tests run. Removing `preview(sound)` from TopBar or the Esc `preventDefault` would pass all tests. Needs a tooling decision, such as vitest with jsdom and Svelte `mount`.
