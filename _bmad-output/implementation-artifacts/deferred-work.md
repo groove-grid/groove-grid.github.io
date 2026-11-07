@@ -75,3 +75,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-4-choose-the-click-sound.md`
   summary: The Sounds level (nav row, focus to `Back to Click` and back, Esc going back without closing), the segmented-control caption fallback and the TopBar preview wiring have no automated test.
   evidence: No DOM or component test runner in the repo (no jsdom, testing-library or Playwright); only pure label and store tests run. Removing `preview(sound)` from TopBar or the Esc `preventDefault` would pass all tests. Needs a tooling decision, such as vitest with jsdom and Svelte `mount`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-4-choose-the-click-sound.md`
+  summary: The click sound choice is hard to find: it sits behind the `Sounds ›` row at the bottom of the Click sheet, a second level most users will never open. Rethink where sound selection lives (for example on the Click sheet's main view, or its own entry point).
+  evidence: User feedback after 3.4 (2026-11-07): "the UX is very bad the sounds menu is hidden". The two-level layout follows UX-DR16 / EXPERIENCE.md, so changing it is a UX decision, likely via `bmad-ux` or `bmad-correct-course`.
